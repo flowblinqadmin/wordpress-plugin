@@ -47,6 +47,10 @@ class Flowblinq_Injector {
      * @param string $schema_url
      */
     public function inject_schema_blocks( string $schema_url ): void {
+        if ( wp_parse_url( $schema_url, PHP_URL_HOST ) !== 'geo.flowblinq.com' ) {
+            return;
+        }
+
         $response = wp_remote_get( $schema_url, [ 'timeout' => 10 ] );
         if ( is_wp_error( $response ) ) {
             return;
@@ -58,7 +62,10 @@ class Flowblinq_Injector {
         }
 
         $body = wp_remote_retrieve_body( $response );
-        // Validate it's JSON before storing
+        // Validate it's JSON and within size limit before storing
+        if ( strlen( $body ) > 512 * 1024 ) {
+            return;
+        }
         if ( null === json_decode( $body ) ) {
             return;
         }
@@ -74,7 +81,7 @@ class Flowblinq_Injector {
         if ( ! $schema ) {
             return;
         }
-        echo '<script type="application/ld+json">' . wp_json_encode( json_decode( $schema ) ) . '</script>' . "\n";
+        echo '<script type="application/ld+json">' . wp_json_encode( json_decode( $schema ), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ) . '</script>' . "\n";
     }
 
     /**
@@ -94,6 +101,10 @@ class Flowblinq_Injector {
      * @param string $source_url
      */
     public function register_llms_txt_rewrite( string $source_url ): void {
+        if ( wp_parse_url( $source_url, PHP_URL_HOST ) !== 'geo.flowblinq.com' ) {
+            return;
+        }
+
         $response = wp_remote_get( $source_url, [ 'timeout' => 10 ] );
         if ( is_wp_error( $response ) ) {
             return;
@@ -144,7 +155,8 @@ class Flowblinq_Injector {
 
         header( 'Content-Type: text/plain; charset=utf-8' );
         header( 'Cache-Control: public, max-age=86400' );
-        echo esc_html( $content );
+        // Plain-text output — esc_html() would corrupt & < > in URLs and markdown
+        echo $content;
         exit;
     }
 }

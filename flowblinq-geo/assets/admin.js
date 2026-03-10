@@ -5,6 +5,8 @@
     'use strict';
 
     var pollInterval = null;
+    var pollCount = 0;
+    var MAX_POLLS = 120; // 120 × 5s = 10 minutes
     var auditId = fqgeo.active_audit_id || null;
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
@@ -74,6 +76,7 @@
             clearInterval(pollInterval);
             pollInterval = null;
         }
+        pollCount = 0;
     }
 
     // ── Status progress mapping ───────────────────────────────────────────────
@@ -92,9 +95,16 @@
     function pollAudit() {
         if (!auditId) { return; }
 
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+            stopPoller();
+            setStatus('Audit timed out. Please try again.');
+            return;
+        }
+
         $.post(fqgeo.ajax_url, {
             action:   'fqgeo_poll_audit',
-            nonce:    fqgeo.nonce,
+            nonce:    fqgeo.nonce_poll,
             audit_id: auditId,
         }, function (resp) {
             if (!resp.success) {
@@ -138,7 +148,7 @@
 
         $.post(fqgeo.ajax_url, {
             action: 'fqgeo_run_audit',
-            nonce:  fqgeo.nonce,
+            nonce:  fqgeo.nonce_run,
         }, function (resp) {
             if (!resp.success) {
                 setStatus('Failed: ' + (resp.data && resp.data.message ? resp.data.message : 'unknown'));
@@ -164,7 +174,7 @@
 
         $.post(fqgeo.ajax_url, {
             action:   'fqgeo_apply',
-            nonce:    fqgeo.nonce,
+            nonce:    fqgeo.nonce_apply,
             audit_id: auditId,
         }, function (resp) {
             $apply.prop('disabled', false);
@@ -188,7 +198,7 @@
 
         $.post(fqgeo.ajax_url, {
             action:   'fqgeo_verify',
-            nonce:    fqgeo.nonce,
+            nonce:    fqgeo.nonce_verify,
             audit_id: auditId,
         }, function (resp) {
             $verify.prop('disabled', false);

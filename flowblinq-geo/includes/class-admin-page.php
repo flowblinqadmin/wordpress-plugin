@@ -41,7 +41,15 @@ class Flowblinq_Admin_Page {
 
     public function register_settings(): void {
         register_setting( 'fqgeo_settings', 'fq_client_id', [ 'sanitize_callback' => 'sanitize_text_field' ] );
-        register_setting( 'fqgeo_settings', 'fq_client_secret', [ 'sanitize_callback' => 'sanitize_text_field' ] );
+        register_setting( 'fqgeo_settings', 'fq_client_secret', [
+            'sanitize_callback' => function ( $value ) {
+                // If the masked placeholder is submitted, keep the existing secret
+                if ( $value === '••••••••' ) {
+                    return get_option( 'fq_client_secret', '' );
+                }
+                return sanitize_text_field( $value );
+            },
+        ] );
     }
 
     public function enqueue_assets( string $hook ): void {
@@ -52,7 +60,10 @@ class Flowblinq_Admin_Page {
         wp_enqueue_script( 'fqgeo-admin', FQGEO_PLUGIN_URL . 'assets/admin.js', [ 'jquery' ], FQGEO_VERSION, true );
         wp_localize_script( 'fqgeo-admin', 'fqgeo', [
             'ajax_url'   => admin_url( 'admin-ajax.php' ),
-            'nonce'      => wp_create_nonce( 'fqgeo_nonce' ),
+            'nonce_run'    => wp_create_nonce( 'fqgeo_run_audit' ),
+            'nonce_poll'   => wp_create_nonce( 'fqgeo_poll_audit' ),
+            'nonce_apply'  => wp_create_nonce( 'fqgeo_apply' ),
+            'nonce_verify' => wp_create_nonce( 'fqgeo_verify' ),
             'site_url'   => get_site_url(),
             'active_audit_id' => get_option( 'fq_active_audit_id', '' ),
         ] );
@@ -80,8 +91,9 @@ class Flowblinq_Admin_Page {
                     <tr>
                         <th scope="row"><label for="fq_client_secret"><?php esc_html_e( 'Client Secret', 'flowblinq-geo' ); ?></label></th>
                         <td>
+                            <?php $has_secret = (bool) get_option( 'fq_client_secret', '' ); ?>
                             <input type="password" id="fq_client_secret" name="fq_client_secret"
-                                   value="<?php echo esc_attr( get_option( 'fq_client_secret', '' ) ); ?>"
+                                   value="<?php echo $has_secret ? '••••••••' : ''; ?>"
                                    class="regular-text" autocomplete="new-password" />
                             <p class="description"><?php esc_html_e( 'Your Flowblinq API Client Secret. Stored securely in WordPress options.', 'flowblinq-geo' ); ?></p>
                         </td>
@@ -97,7 +109,7 @@ class Flowblinq_Admin_Page {
                         __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">geo.flowblinq.com → Settings → API</a>.', 'flowblinq-geo' ),
                         [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
                     ),
-                    'https://geo.flowblinq.com/dashboard/settings'
+                    esc_url( 'https://geo.flowblinq.com/dashboard/settings' )
                 );
                 ?>
             </p>
@@ -166,8 +178,8 @@ class Flowblinq_Admin_Page {
 
     // ── AJAX handlers ─────────────────────────────────────────────────────────
 
-    private function verify_request(): void {
-        check_ajax_referer( 'fqgeo_nonce', 'nonce' );
+    private function verify_request( string $action ): void {
+        check_ajax_referer( $action, 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
         }
@@ -181,7 +193,7 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_run_audit(): void {
-        $this->verify_request();
+        $this->verify_request( 'fqgeo_run_audit' );
 
         $result = $this->get_api_client()->submit_audit( get_site_url() );
 
@@ -198,7 +210,7 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_poll_audit(): void {
-        $this->verify_request();
+        $this->verify_request( 'fqgeo_poll_audit' );
 
         $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
         if ( ! $audit_id ) {
@@ -215,7 +227,7 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_apply(): void {
-        $this->verify_request();
+        $this->verify_request( 'fqgeo_apply' );
 
         $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
         if ( ! $audit_id ) {
@@ -234,7 +246,7 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_verify(): void {
-        $this->verify_request();
+        $this->verify_request( 'fqgeo_verify' );
 
         $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
         if ( ! $audit_id ) {

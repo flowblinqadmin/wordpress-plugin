@@ -25,6 +25,7 @@ require_once FQGEO_PLUGIN_DIR . 'includes/class-admin-page.php';
 require_once FQGEO_PLUGIN_DIR . 'includes/class-injector.php';
 
 register_activation_hook( __FILE__, function () {
+    add_rewrite_rule( '^flowblinq-llms\.txt$', 'index.php?fq_llms_txt=1', 'top' );
     flush_rewrite_rules();
 } );
 
