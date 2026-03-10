@@ -1,0 +1,74 @@
+/* Flowblinq GEO — Admin styles */
+
+#fqgeo-wrap {
+    max-width: 800px;
+}
+
+#fqgeo-progress {
+    margin: 16px 0;
+}
+
+#fqgeo-bar {
+    display: block;
+    width: 100%;
+    height: 12px;
+    margin-top: 8px;
+}
+
+#fqgeo-status {
+    font-style: italic;
+    color: #666;
+}
+
+#fqgeo-results {
+    margin-top: 24px;
+}
+
+#fqgeo-scorecard {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+}
+
+#fqgeo-scorecard h3 {
+    margin-top: 0;
+}
+
+.fqgeo-score {
+    font-size: 48px;
+    font-weight: 700;
+    color: #2271b1;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.fqgeo-score-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #888;
+    letter-spacing: 0.05em;
+}
+
+.fqgeo-issues {
+    margin-top: 12px;
+    padding-left: 20px;
+}
+
+.fqgeo-issues li {
+    margin-bottom: 4px;
+}
+
+#fqgeo-comparison {
+    margin-top: 20px;
+}
+
+#fqgeo-before-after td,
+#fqgeo-before-after th {
+    padding: 8px 12px;
+}
+
+#fqgeo-actions .button {
+    margin-right: 8px;
+}
