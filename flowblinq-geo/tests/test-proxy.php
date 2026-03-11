@@ -3,7 +3,8 @@
  * ES-042 — Unit tests for Flowblinq_Proxy (U1-U23) and Admin/Uninstall (U24-U30).
  *
  * Standalone test runner — no PHPUnit or WordPress test harness required.
- * Run: php tests/test-proxy.php
+ * Requires PHP 7.1+ (void return types). WordPress 6.x requires PHP 7.2.5+.
+ * Run: php8.3 tests/test-proxy.php
  */
 
 require_once __DIR__ . '/bootstrap.php';
@@ -225,6 +226,7 @@ run_test( 'U6: handle_serve serves cached content on cache hit', function () {
     // Check headers
     $headers = $GLOBALS['_fq_headers_sent'];
     assert_true( in_array( 'HTTP/1.1 200', $headers, true ), '200 status' );
+    assert_true( in_array( 'Content-Type: text/plain; charset=utf-8', $headers, true ), 'Content-Type header' );
 });
 
 // U7: handle_serve — cache miss, upstream 200

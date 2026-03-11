@@ -90,9 +90,9 @@ class Flowblinq_Proxy {
 
         // Serve the response
         status_header( 200 );
-        header( 'Content-Type: ' . self::$serve_map[ $key ]['type'] );
-        header( 'Cache-Control: public, max-age=3600' );
-        header( 'X-Generator: FlowBlinq GEO' );
+        $this->send_header( 'Content-Type: ' . self::$serve_map[ $key ]['type'] );
+        $this->send_header( 'Cache-Control: public, max-age=3600' );
+        $this->send_header( 'X-Generator: FlowBlinq GEO' );
         echo $content;
         $this->do_exit();
     }
@@ -224,6 +224,18 @@ class Flowblinq_Proxy {
         delete_transient( 'fq_proxy_llms_full_txt' );
         delete_transient( 'fq_proxy_business_json' );
         delete_transient( 'fq_proxy_schema_json' );
+    }
+
+    /**
+     * Header wrapper — captured by test environment, calls header() in production.
+     *
+     * @param string $header
+     */
+    protected function send_header( $header ) {
+        if ( ! class_exists( 'FQ_Exit_Exception', false ) ) {
+            header( $header ); // @codeCoverageIgnore
+        }
+        $GLOBALS['_fq_headers_sent'][] = $header;
     }
 
     /**
