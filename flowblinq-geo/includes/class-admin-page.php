@@ -22,7 +22,7 @@ class Flowblinq_Admin_Page {
         add_action( 'admin_init',               [ $this, 'register_settings' ] );
     }
 
-    public function add_menu_pages(): void {
+    public function add_menu_pages() {
         add_options_page(
             __( 'Flowblinq GEO Settings', 'flowblinq-geo' ),
             __( 'Flowblinq GEO', 'flowblinq-geo' ),
@@ -40,7 +40,7 @@ class Flowblinq_Admin_Page {
         );
     }
 
-    public function register_settings(): void {
+    public function register_settings() {
         register_setting( 'fqgeo_settings', 'fq_client_id', [ 'sanitize_callback' => 'sanitize_text_field' ] );
         register_setting( 'fqgeo_settings', 'fq_client_secret', [
             'sanitize_callback' => function ( $value ) {
@@ -52,7 +52,7 @@ class Flowblinq_Admin_Page {
         ] );
     }
 
-    public function enqueue_assets( string $hook ): void {
+    public function enqueue_assets( $hook ) {
         if ( $hook !== 'tools_page_fqgeo-audit' && $hook !== 'settings_page_fqgeo-settings' ) {
             return;
         }
@@ -72,7 +72,7 @@ class Flowblinq_Admin_Page {
         ] );
     }
 
-    public function render_settings_page(): void {
+    public function render_settings_page() {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Flowblinq GEO Settings', 'flowblinq-geo' ); ?></h1>
@@ -141,7 +141,7 @@ class Flowblinq_Admin_Page {
         <?php
     }
 
-    public function render_audit_page(): void {
+    public function render_audit_page() {
         $client_id     = get_option( 'fq_client_id', '' );
         $client_secret = get_option( 'fq_client_secret', '' );
         $configured    = $client_id && $client_secret;
@@ -207,21 +207,21 @@ class Flowblinq_Admin_Page {
 
     // ── AJAX handlers ─────────────────────────────────────────────────────────
 
-    private function verify_request( string $action ): void {
+    private function verify_request( $action ) {
         check_ajax_referer( $action, 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
         }
     }
 
-    private function get_api_client(): Flowblinq_API_Client {
+    private function get_api_client() {
         return new Flowblinq_API_Client(
             get_option( 'fq_client_id', '' ),
             get_option( 'fq_client_secret', '' )
         );
     }
 
-    public function handle_ajax_run_audit(): void {
+    public function handle_ajax_run_audit() {
         $this->verify_request( 'fqgeo_run_audit' );
 
         $result = $this->get_api_client()->submit_audit( get_site_url() );
@@ -241,7 +241,7 @@ class Flowblinq_Admin_Page {
         wp_send_json_success( $result );
     }
 
-    public function handle_ajax_poll_audit(): void {
+    public function handle_ajax_poll_audit() {
         $this->verify_request( 'fqgeo_poll_audit' );
 
         $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
@@ -258,7 +258,7 @@ class Flowblinq_Admin_Page {
         wp_send_json_success( $result );
     }
 
-    public function handle_ajax_verify(): void {
+    public function handle_ajax_verify() {
         $this->verify_request( 'fqgeo_verify' );
 
         $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
@@ -275,7 +275,7 @@ class Flowblinq_Admin_Page {
         wp_send_json_success( $result );
     }
 
-    public function handle_ajax_test_connection(): void {
+    public function handle_ajax_test_connection() {
         $this->verify_request( 'fqgeo_test_connection' );
 
         $slug = get_option( 'fq_site_slug', '' );
@@ -298,7 +298,7 @@ class Flowblinq_Admin_Page {
         }
     }
 
-    public function handle_ajax_clear_cache(): void {
+    public function handle_ajax_clear_cache() {
         $this->verify_request( 'fqgeo_clear_cache' );
         Flowblinq_Proxy::clear_cache();
         wp_send_json_success( [ 'message' => 'Cache cleared.' ] );
