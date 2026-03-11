@@ -6,13 +6,12 @@
 
     var pollInterval = null;
     var pollCount = 0;
-    var MAX_POLLS = 120; // 120 × 5s = 10 minutes
+    var MAX_POLLS = fqgeo.max_polls || 120;
     var auditId = fqgeo.active_audit_id || null;
 
     // ── DOM refs ──────────────────────────────────────────────────────────────
 
     var $run     = $('#fqgeo-run');
-    var $apply   = $('#fqgeo-apply');
     var $verify  = $('#fqgeo-verify');
     var $progress = $('#fqgeo-progress');
     var $status  = $('#fqgeo-status');
@@ -122,13 +121,17 @@
             if (st === 'complete') {
                 stopPoller();
                 renderScorecard(data);
-                $apply.show();
+
+                if (data.slug) {
+                    fqgeo.site_slug = data.slug;
+                }
+
+                // Show verify button directly (no Apply step)
+                $verify.show();
 
                 // If run 2 complete, show before/after
                 if (data.free_run_number === 2 && data.scorecard) {
-                    $apply.hide();
                     $verify.hide();
-                    // Try to show comparison if we have snapshot
                     if (data.scorecard && data.scorecard._previousSnapshot) {
                         renderComparison(data.scorecard._previousSnapshot, data.scorecard);
                     }
@@ -141,7 +144,6 @@
 
     $run.on('click', function () {
         $run.prop('disabled', true);
-        $apply.hide();
         $verify.hide();
         showProgress();
         setStatus('Submitting audit…', 5);
@@ -159,33 +161,8 @@
             auditId = resp.data.audit_id;
             setStatus('Audit running…', statusProgress[resp.data.status] || 10);
 
-            // Start polling every 5s
             stopPoller();
             pollInterval = setInterval(pollAudit, 5000);
-        });
-    });
-
-    // ── Apply optimizations ───────────────────────────────────────────────────
-
-    $apply.on('click', function () {
-        $apply.prop('disabled', true);
-        setStatus('Applying optimizations…');
-        $progress.show();
-
-        $.post(fqgeo.ajax_url, {
-            action:   'fqgeo_apply',
-            nonce:    fqgeo.nonce_apply,
-            audit_id: auditId,
-        }, function (resp) {
-            $apply.prop('disabled', false);
-            if (!resp.success) {
-                setStatus('Apply failed: ' + (resp.data && resp.data.message ? resp.data.message : 'unknown'));
-                return;
-            }
-            setStatus('Optimizations applied. You can now verify your changes.');
-            $apply.hide();
-            $verify.show();
-            $progress.hide();
         });
     });
 
@@ -212,12 +189,50 @@
         });
     });
 
+    // ── Test connection ───────────────────────────────────────────────────────
+
+    $('#fqgeo-test-connection').on('click', function () {
+        var $btn = $(this);
+        var $connStatus = $('#fqgeo-connection-status');
+        $btn.prop('disabled', true);
+        $connStatus.text('Testing…');
+
+        $.post(fqgeo.ajax_url, {
+            action: 'fqgeo_test_connection',
+            nonce:  fqgeo.nonce_test,
+        }, function (resp) {
+            $btn.prop('disabled', false);
+            if (resp.success) {
+                $connStatus.text(resp.data.message).css('color', '#00a32a');
+            } else {
+                $connStatus.text(resp.data.message).css('color', '#d63638');
+            }
+        });
+    });
+
+    // ── Clear cache ───────────────────────────────────────────────────────────
+
+    $('#fqgeo-clear-cache').on('click', function () {
+        var $btn = $(this);
+        $btn.prop('disabled', true);
+
+        $.post(fqgeo.ajax_url, {
+            action: 'fqgeo_clear_cache',
+            nonce:  fqgeo.nonce_clear,
+        }, function (resp) {
+            $btn.prop('disabled', false);
+            if (resp.success) {
+                alert(resp.data.message);
+            }
+        });
+    });
+
     // ── Auto-resume polling if page loaded with an active audit ──────────────
 
     if (auditId) {
         showProgress();
         setStatus('Checking audit status…', 5);
-        pollAudit(); // immediate check
+        pollAudit();
         pollInterval = setInterval(pollAudit, 5000);
     }
 

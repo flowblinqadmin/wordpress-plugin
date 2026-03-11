@@ -1,19 +1,17 @@
 <?php
-/**
- * Flowblinq GEO — Uninstall
- *
- * Cleans up all plugin data from wp_options when the plugin is deleted.
- */
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) { exit; }
 
-if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-    exit;
-}
-
+// Options
 delete_option( 'fq_client_id' );
 delete_option( 'fq_client_secret' );
+delete_option( 'fq_site_slug' );
 delete_option( 'fq_active_audit_id' );
-delete_option( 'fq_schema_blocks' );
-delete_option( 'fq_llms_txt_content' );
+
+// Transients
 delete_transient( 'fq_access_token' );
+delete_transient( 'fq_proxy_llms_txt' );
+delete_transient( 'fq_proxy_llms_full_txt' );
+delete_transient( 'fq_proxy_business_json' );
+delete_transient( 'fq_proxy_schema_json' );
 
 flush_rewrite_rules();

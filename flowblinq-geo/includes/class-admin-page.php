@@ -16,8 +16,9 @@ class Flowblinq_Admin_Page {
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
         add_action( 'wp_ajax_fqgeo_run_audit',  [ $this, 'handle_ajax_run_audit' ] );
         add_action( 'wp_ajax_fqgeo_poll_audit', [ $this, 'handle_ajax_poll_audit' ] );
-        add_action( 'wp_ajax_fqgeo_apply',      [ $this, 'handle_ajax_apply' ] );
         add_action( 'wp_ajax_fqgeo_verify',     [ $this, 'handle_ajax_verify' ] );
+        add_action( 'wp_ajax_fqgeo_test_connection', [ $this, 'handle_ajax_test_connection' ] );
+        add_action( 'wp_ajax_fqgeo_clear_cache', [ $this, 'handle_ajax_clear_cache' ] );
         add_action( 'admin_init',               [ $this, 'register_settings' ] );
     }
 
@@ -43,7 +44,6 @@ class Flowblinq_Admin_Page {
         register_setting( 'fqgeo_settings', 'fq_client_id', [ 'sanitize_callback' => 'sanitize_text_field' ] );
         register_setting( 'fqgeo_settings', 'fq_client_secret', [
             'sanitize_callback' => function ( $value ) {
-                // If the masked placeholder is submitted, keep the existing secret
                 if ( $value === '••••••••' ) {
                     return get_option( 'fq_client_secret', '' );
                 }
@@ -53,19 +53,22 @@ class Flowblinq_Admin_Page {
     }
 
     public function enqueue_assets( string $hook ): void {
-        if ( $hook !== 'tools_page_fqgeo-audit' ) {
+        if ( $hook !== 'tools_page_fqgeo-audit' && $hook !== 'settings_page_fqgeo-settings' ) {
             return;
         }
         wp_enqueue_style( 'fqgeo-admin', FQGEO_PLUGIN_URL . 'assets/admin.css', [], FQGEO_VERSION );
         wp_enqueue_script( 'fqgeo-admin', FQGEO_PLUGIN_URL . 'assets/admin.js', [ 'jquery' ], FQGEO_VERSION, true );
         wp_localize_script( 'fqgeo-admin', 'fqgeo', [
-            'ajax_url'   => admin_url( 'admin-ajax.php' ),
-            'nonce_run'    => wp_create_nonce( 'fqgeo_run_audit' ),
-            'nonce_poll'   => wp_create_nonce( 'fqgeo_poll_audit' ),
-            'nonce_apply'  => wp_create_nonce( 'fqgeo_apply' ),
-            'nonce_verify' => wp_create_nonce( 'fqgeo_verify' ),
-            'site_url'   => get_site_url(),
-            'active_audit_id' => get_option( 'fq_active_audit_id', '' ),
+            'ajax_url'         => admin_url( 'admin-ajax.php' ),
+            'nonce_run'        => wp_create_nonce( 'fqgeo_run_audit' ),
+            'nonce_poll'       => wp_create_nonce( 'fqgeo_poll_audit' ),
+            'nonce_verify'     => wp_create_nonce( 'fqgeo_verify' ),
+            'nonce_test'       => wp_create_nonce( 'fqgeo_test_connection' ),
+            'nonce_clear'      => wp_create_nonce( 'fqgeo_clear_cache' ),
+            'site_url'         => get_site_url(),
+            'site_slug'        => get_option( 'fq_site_slug', '' ),
+            'active_audit_id'  => get_option( 'fq_active_audit_id', '' ),
+            'max_polls'        => FQGEO_MAX_POLLS,
         ] );
     }
 
@@ -73,6 +76,13 @@ class Flowblinq_Admin_Page {
         ?>
         <div class="wrap">
             <h1><?php esc_html_e( 'Flowblinq GEO Settings', 'flowblinq-geo' ); ?></h1>
+
+            <?php if ( ! get_option( 'permalink_structure' ) ) : ?>
+                <div class="notice notice-error inline">
+                    <p><?php esc_html_e( 'Flowblinq GEO requires "pretty permalinks" to be enabled. Go to Settings → Permalinks and select any structure other than "Plain".', 'flowblinq-geo' ); ?></p>
+                </div>
+            <?php endif; ?>
+
             <form method="post" action="options.php">
                 <?php
                 settings_fields( 'fqgeo_settings' );
@@ -98,13 +108,27 @@ class Flowblinq_Admin_Page {
                             <p class="description"><?php esc_html_e( 'Your Flowblinq API Client Secret. Stored securely in WordPress options.', 'flowblinq-geo' ); ?></p>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'Site Slug', 'flowblinq-geo' ); ?></th>
+                        <td>
+                            <?php $slug = get_option( 'fq_site_slug', '' ); ?>
+                            <code><?php echo $slug ? esc_html( $slug ) : esc_html__( '(auto-populated after first audit)', 'flowblinq-geo' ); ?></code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php esc_html_e( 'Proxy Status', 'flowblinq-geo' ); ?></th>
+                        <td>
+                            <span id="fqgeo-connection-status">&mdash;</span>
+                            <button type="button" id="fqgeo-test-connection" class="button"><?php esc_html_e( 'Test Connection', 'flowblinq-geo' ); ?></button>
+                            <button type="button" id="fqgeo-clear-cache" class="button"><?php esc_html_e( 'Clear Cache', 'flowblinq-geo' ); ?></button>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button(); ?>
             </form>
             <p>
                 <?php
                 printf(
-                    /* translators: %s: URL to Flowblinq API settings */
                     wp_kses(
                         __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">geo.flowblinq.com → Settings → API</a>.', 'flowblinq-geo' ),
                         [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
@@ -131,7 +155,6 @@ class Flowblinq_Admin_Page {
                         <?php
                         printf(
                             wp_kses(
-                                /* translators: %s: settings page URL */
                                 __( 'Please <a href="%s">configure your Flowblinq API credentials</a> first.', 'flowblinq-geo' ),
                                 [ 'a' => [ 'href' => [] ] ]
                             ),
@@ -145,7 +168,6 @@ class Flowblinq_Admin_Page {
 
                 <div id="fqgeo-actions">
                     <button id="fqgeo-run" class="button button-primary"><?php esc_html_e( 'Run Free Audit', 'flowblinq-geo' ); ?></button>
-                    <button id="fqgeo-apply" class="button" style="display:none"><?php esc_html_e( 'Apply Optimizations', 'flowblinq-geo' ); ?></button>
                     <button id="fqgeo-verify" class="button" style="display:none"><?php esc_html_e( 'Verify My Changes', 'flowblinq-geo' ); ?></button>
                 </div>
 
@@ -157,6 +179,13 @@ class Flowblinq_Admin_Page {
                 <div id="fqgeo-results" style="display:none">
                     <h2><?php esc_html_e( 'Audit Results', 'flowblinq-geo' ); ?></h2>
                     <div id="fqgeo-scorecard"></div>
+
+                    <?php if ( get_option( 'fq_site_slug' ) ) : ?>
+                        <div class="notice notice-success inline">
+                            <p><?php esc_html_e( 'Proxy is active — your GEO files are being served automatically.', 'flowblinq-geo' ); ?></p>
+                        </div>
+                    <?php endif; ?>
+
                     <div id="fqgeo-comparison" style="display:none">
                         <h3><?php esc_html_e( 'Before / After', 'flowblinq-geo' ); ?></h3>
                         <table class="widefat" id="fqgeo-before-after">
@@ -201,9 +230,12 @@ class Flowblinq_Admin_Page {
             wp_send_json_error( [ 'message' => $result->get_error_message() ] );
         }
 
-        // Store audit_id for polling
         if ( ! empty( $result['audit_id'] ) ) {
             update_option( 'fq_active_audit_id', $result['audit_id'] );
+        }
+
+        if ( ! empty( $result['slug'] ) ) {
+            update_option( 'fq_site_slug', sanitize_text_field( $result['slug'] ) );
         }
 
         wp_send_json_success( $result );
@@ -226,25 +258,6 @@ class Flowblinq_Admin_Page {
         wp_send_json_success( $result );
     }
 
-    public function handle_ajax_apply(): void {
-        $this->verify_request( 'fqgeo_apply' );
-
-        $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
-        if ( ! $audit_id ) {
-            wp_send_json_error( [ 'message' => 'audit_id required' ] );
-        }
-
-        $audit = $this->get_api_client()->get_audit( $audit_id );
-        if ( is_wp_error( $audit ) ) {
-            wp_send_json_error( [ 'message' => $audit->get_error_message() ] );
-        }
-
-        $injector = new Flowblinq_Injector();
-        $injector->inject_all( $audit );
-
-        wp_send_json_success( [ 'message' => 'Optimizations applied.' ] );
-    }
-
     public function handle_ajax_verify(): void {
         $this->verify_request( 'fqgeo_verify' );
 
@@ -260,5 +273,34 @@ class Flowblinq_Admin_Page {
         }
 
         wp_send_json_success( $result );
+    }
+
+    public function handle_ajax_test_connection(): void {
+        $this->verify_request( 'fqgeo_test_connection' );
+
+        $slug = get_option( 'fq_site_slug', '' );
+        if ( ! $slug ) {
+            wp_send_json_error( [ 'message' => 'Site slug not configured. Run an audit first.' ] );
+        }
+
+        $url      = FQGEO_SERVE_BASE . '/' . $slug . '/llms.txt';
+        $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( [ 'message' => 'Connection failed: ' . $response->get_error_message() ] );
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        if ( $code === 200 ) {
+            wp_send_json_success( [ 'message' => 'Connected — proxy is working.' ] );
+        } else {
+            wp_send_json_error( [ 'message' => 'Upstream returned HTTP ' . $code ] );
+        }
+    }
+
+    public function handle_ajax_clear_cache(): void {
+        $this->verify_request( 'fqgeo_clear_cache' );
+        Flowblinq_Proxy::clear_cache();
+        wp_send_json_success( [ 'message' => 'Cache cleared.' ] );
     }
 }

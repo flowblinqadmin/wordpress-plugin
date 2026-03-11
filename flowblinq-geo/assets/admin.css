@@ -72,3 +72,13 @@
 #fqgeo-actions .button {
     margin-right: 8px;
 }
+
+#fqgeo-connection-status {
+    display: inline-block;
+    margin-right: 8px;
+    font-weight: 600;
+}
+
+.notice.inline {
+    margin: 8px 0;
+}
