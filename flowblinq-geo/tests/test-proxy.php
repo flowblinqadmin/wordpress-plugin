@@ -215,7 +215,7 @@ run_test( 'U6: handle_serve serves cached content on cache hit', function () {
     ob_start();
     try {
         $proxy->handle_serve();
-    } catch ( FQ_Exit_Exception $e ) {
+    } catch ( Flowblinq_GEO_Exit_Exception $e ) {
         // expected
     }
     $output = ob_get_clean();
@@ -239,7 +239,7 @@ run_test( 'U7: handle_serve fetches from upstream on cache miss', function () {
     ob_start();
     try {
         $proxy->handle_serve();
-    } catch ( FQ_Exit_Exception $e ) {
+    } catch ( Flowblinq_GEO_Exit_Exception $e ) {
         // expected
     }
     $output = ob_get_clean();
@@ -261,7 +261,7 @@ run_test( 'U8: handle_serve returns 502 on upstream non-200', function () {
     ob_start();
     try {
         $proxy->handle_serve();
-    } catch ( FQ_Exit_Exception $e ) {
+    } catch ( Flowblinq_GEO_Exit_Exception $e ) {
         // expected
     }
     $output = ob_get_clean();
@@ -280,7 +280,7 @@ run_test( 'U9: handle_serve returns 504 on upstream timeout', function () {
     ob_start();
     try {
         $proxy->handle_serve();
-    } catch ( FQ_Exit_Exception $e ) {
+    } catch ( Flowblinq_GEO_Exit_Exception $e ) {
         // expected
     }
     $output = ob_get_clean();
@@ -300,7 +300,7 @@ run_test( 'U10: handle_serve returns 502 for oversized response', function () {
     ob_start();
     try {
         $proxy->handle_serve();
-    } catch ( FQ_Exit_Exception $e ) {
+    } catch ( Flowblinq_GEO_Exit_Exception $e ) {
         // expected
     }
     $output = ob_get_clean();
@@ -319,7 +319,7 @@ run_test( 'U11: errors are never cached in transients', function () {
     ob_start();
     try {
         $proxy->handle_serve();
-    } catch ( FQ_Exit_Exception $e ) {}
+    } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
     ob_get_clean();
 
     assert_false( array_key_exists( 'fq_proxy_llms_txt', $GLOBALS['_fq_transients'] ), 'error should not be cached' );

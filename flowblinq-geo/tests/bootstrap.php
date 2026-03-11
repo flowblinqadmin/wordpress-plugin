@@ -30,7 +30,7 @@ function get_option( $key, $default = false ) {
     return array_key_exists( $key, $GLOBALS['_fq_options'] ) ? $GLOBALS['_fq_options'][ $key ] : $default;
 }
 
-function update_option( $key, $value ) {
+function update_option( $key, $value, $autoload = null ) {
     $GLOBALS['_fq_options'][ $key ] = $value;
     return true;
 }
@@ -224,7 +224,7 @@ class WP_Error {
 
 class FQ_WP_Die_Exception extends \RuntimeException {}
 class FQ_Ajax_Exit_Exception extends \RuntimeException {}
-class FQ_Exit_Exception extends \RuntimeException {}
+class Flowblinq_GEO_Exit_Exception extends \RuntimeException {}
 
 // ── Helper to build mock HTTP response ──────────────────────────────────────
 

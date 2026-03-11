@@ -105,7 +105,7 @@ class Flowblinq_Proxy {
      * @return string|WP_Error  Body string on success, WP_Error on failure
      */
     public function fetch_upstream( $key, $slug ) {
-        $url = FQGEO_SERVE_BASE . '/' . $slug . '/' . self::$serve_map[ $key ]['path'];
+        $url = FQGEO_SERVE_BASE . '/' . rawurlencode( $slug ) . '/' . self::$serve_map[ $key ]['path'];
 
         $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
 
@@ -131,6 +131,9 @@ class Flowblinq_Proxy {
 
     /**
      * Inject schema JSON-LD into <head>.
+     *
+     * Uses stale-while-revalidate: serves cached content immediately even if
+     * expired, and triggers a single background refresh via transient lock.
      */
     public function inject_schema_jsonld() {
         $slug = get_option( 'fq_site_slug', '' );
@@ -141,35 +144,20 @@ class Flowblinq_Proxy {
         $raw = get_transient( 'fq_proxy_schema_json' );
 
         if ( false === $raw ) {
-            // Cache miss — fetch from upstream
-            $url = FQGEO_SERVE_BASE . '/' . $slug . '/schema.json';
-            $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
+            // Hard cache miss — check for stale value
+            $stale = get_option( '_fq_stale_schema_json', '' );
 
-            if ( is_wp_error( $response ) ) {
-                error_log( '[Flowblinq GEO] Schema fetch error: timeout' );
-                return;
+            if ( $stale !== '' ) {
+                // Serve stale content; trigger background refresh (lock prevents stampede)
+                $raw = $stale;
+                $this->maybe_refresh_schema( $slug );
+            } else {
+                // First-ever fetch — no stale content available
+                $raw = $this->fetch_schema_upstream( $slug );
+                if ( false === $raw ) {
+                    return;
+                }
             }
-
-            $code = wp_remote_retrieve_response_code( $response );
-            if ( $code !== 200 ) {
-                error_log( '[Flowblinq GEO] Schema fetch error: HTTP ' . $code );
-                return;
-            }
-
-            $body = wp_remote_retrieve_body( $response );
-            if ( strlen( $body ) > FQGEO_PROXY_MAX_SIZE ) {
-                error_log( '[Flowblinq GEO] Schema response too large' );
-                return;
-            }
-
-            $decoded = json_decode( $body, true );
-            if ( ! is_array( $decoded ) || ! isset( $decoded[0] ) ) {
-                // Must be a numerically-indexed array (list of schemas)
-                return;
-            }
-
-            set_transient( 'fq_proxy_schema_json', $body, FQGEO_CACHE_TTL );
-            $raw = $body;
         }
 
         $schemas = json_decode( $raw, true );
@@ -195,6 +183,10 @@ class Flowblinq_Proxy {
      * @return string Modified robots.txt content
      */
     public function append_robots_directives( $output, $public ) {
+        if ( ! $public ) {
+            return $output;
+        }
+
         $slug = get_option( 'fq_site_slug', '' );
         if ( empty( $slug ) ) {
             return $output;
@@ -217,6 +209,63 @@ class Flowblinq_Proxy {
     }
 
     /**
+     * Fetch schema JSON from upstream. Sets both transient and stale option.
+     *
+     * @param string $slug Site slug
+     * @return string|false  Body on success, false on failure
+     */
+    private function fetch_schema_upstream( $slug ) {
+        $url      = FQGEO_SERVE_BASE . '/' . rawurlencode( $slug ) . '/schema.json';
+        $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
+
+        if ( is_wp_error( $response ) ) {
+            error_log( '[Flowblinq GEO] Schema fetch error: timeout' );
+            return false;
+        }
+
+        $code = wp_remote_retrieve_response_code( $response );
+        if ( $code !== 200 ) {
+            error_log( '[Flowblinq GEO] Schema fetch error: HTTP ' . $code );
+            return false;
+        }
+
+        $body = wp_remote_retrieve_body( $response );
+        if ( strlen( $body ) > FQGEO_PROXY_MAX_SIZE ) {
+            error_log( '[Flowblinq GEO] Schema response too large' );
+            return false;
+        }
+
+        $decoded = json_decode( $body, true );
+        if ( ! is_array( $decoded ) || ! isset( $decoded[0] ) ) {
+            return false;
+        }
+
+        set_transient( 'fq_proxy_schema_json', $body, FQGEO_CACHE_TTL );
+        update_option( '_fq_stale_schema_json', $body, false );
+        return $body;
+    }
+
+    /**
+     * Trigger a background schema refresh if no other request is already doing so.
+     * Uses a short-lived lock transient to prevent cache stampede.
+     *
+     * @param string $slug Site slug
+     */
+    private function maybe_refresh_schema( $slug ) {
+        // Acquire lock — only one request refreshes at a time
+        if ( false !== get_transient( '_fq_lock_schema_json' ) ) {
+            return;
+        }
+        set_transient( '_fq_lock_schema_json', 1, 30 );
+
+        // Non-blocking fetch in a shutdown action so page rendering isn't delayed
+        add_action( 'shutdown', function () use ( $slug ) {
+            $this->fetch_schema_upstream( $slug );
+            delete_transient( '_fq_lock_schema_json' );
+        } );
+    }
+
+    /**
      * Clear all proxy transients.
      */
     public static function clear_cache() {
@@ -224,6 +273,9 @@ class Flowblinq_Proxy {
         delete_transient( 'fq_proxy_llms_full_txt' );
         delete_transient( 'fq_proxy_business_json' );
         delete_transient( 'fq_proxy_schema_json' );
+        delete_transient( '_fq_lock_schema_json' );
+        // Stale option preserved intentionally — allows stale-while-revalidate
+        // to serve content immediately after cache clear
     }
 
     /**
@@ -232,18 +284,19 @@ class Flowblinq_Proxy {
      * @param string $header
      */
     protected function send_header( $header ) {
-        if ( ! class_exists( 'FQ_Exit_Exception', false ) ) {
+        if ( ! class_exists( 'Flowblinq_GEO_Exit_Exception', false ) ) {
             header( $header ); // @codeCoverageIgnore
+        } else {
+            $GLOBALS['_fq_headers_sent'][] = $header;
         }
-        $GLOBALS['_fq_headers_sent'][] = $header;
     }
 
     /**
      * Exit wrapper — throws in test environment, calls exit() in production.
      */
     protected function do_exit() {
-        if ( class_exists( 'FQ_Exit_Exception', false ) ) {
-            throw new FQ_Exit_Exception( 'exit' );
+        if ( class_exists( 'Flowblinq_GEO_Exit_Exception', false ) ) {
+            throw new Flowblinq_GEO_Exit_Exception( 'exit' );
         }
         exit; // @codeCoverageIgnore
     }

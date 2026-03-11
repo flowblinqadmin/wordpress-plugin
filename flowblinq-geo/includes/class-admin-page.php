@@ -235,7 +235,12 @@ class Flowblinq_Admin_Page {
         }
 
         if ( ! empty( $result['slug'] ) ) {
-            update_option( 'fq_site_slug', sanitize_text_field( $result['slug'] ) );
+            $clean_slug = sanitize_text_field( $result['slug'] );
+            if ( preg_match( '/^[a-z0-9\-]+$/i', $clean_slug ) ) {
+                update_option( 'fq_site_slug', $clean_slug );
+            } else {
+                wp_send_json_error( [ 'message' => 'Invalid slug format returned by API' ] );
+            }
         }
 
         wp_send_json_success( $result );
@@ -283,7 +288,7 @@ class Flowblinq_Admin_Page {
             wp_send_json_error( [ 'message' => 'Site slug not configured. Run an audit first.' ] );
         }
 
-        $url      = FQGEO_SERVE_BASE . '/' . $slug . '/llms.txt';
+        $url      = FQGEO_SERVE_BASE . '/' . rawurlencode( $slug ) . '/llms.txt';
         $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
 
         if ( is_wp_error( $response ) ) {
