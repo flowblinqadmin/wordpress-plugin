@@ -29,11 +29,18 @@ class Test_Security extends WP_UnitTestCase {
     public function setUp(): void {
         parent::setUp();
         wp_cache_flush();
+        $GLOBALS['_fq_headers_sent'] = [];
 
         $this->admin_id      = $this->factory->user->create( [ 'role' => 'administrator' ] );
         $this->subscriber_id = $this->factory->user->create( [ 'role' => 'subscriber' ] );
         $this->editor_id     = $this->factory->user->create( [ 'role' => 'editor' ] );
         $this->author_id     = $this->factory->user->create( [ 'role' => 'author' ] );
+    }
+
+    public function tearDown(): void {
+        unset( $_REQUEST['nonce'], $_POST['nonce'], $_POST['audit_id'], $_POST['url'] );
+        $GLOBALS['_fq_headers_sent'] = [];
+        parent::tearDown();
     }
 
     // -----------------------------------------------------------------------
@@ -60,29 +67,36 @@ class Test_Security extends WP_UnitTestCase {
     }
 
     /**
-     * Call an AJAX handler and return output. Sets up a wp_die handler to catch 403.
+     * Call an AJAX handler and return output. Installs a wp_die_handler to catch
+     * wp_die() calls (fires for non-AJAX context — handlers are called directly).
+     *
+     * Uses priority 999 to override the WP test framework's own handler.
      */
     private function call_ajax_handler( callable $fn ): array {
         $die_called = false;
         $die_status = 0;
 
-        add_filter( 'wp_die_ajax_handler', function() use ( &$die_called, &$die_status ) {
-            return function( $message, $title, $args ) use ( &$die_called, &$die_status ) {
+        // wp_die_handler fires when wp_doing_ajax() is false (direct handler invocation)
+        $filter_cb = function() use ( &$die_called, &$die_status ) {
+            return function( $message = '', $title = '', $args = [] ) use ( &$die_called, &$die_status ) {
                 $die_called = true;
                 $die_status = is_array( $args ) ? ( $args['response'] ?? 0 ) : 0;
                 throw new Flowblinq_GEO_Exit_Exception( 'wp_die called' );
             };
-        } );
+        };
+
+        add_filter( 'wp_die_handler', $filter_cb, 999 );
 
         ob_start();
         try {
             $fn();
-        } catch ( Flowblinq_GEO_Exit_Exception $e ) {
-            // expected
+        } catch ( \Exception $e ) {
+            // Catches Flowblinq_GEO_Exit_Exception (from our handler above)
+            // or WPDieException (from WP test framework fallback)
         }
         $output = ob_get_clean();
 
-        remove_all_filters( 'wp_die_ajax_handler' );
+        remove_filter( 'wp_die_handler', $filter_cb, 999 );
 
         return [
             'output'      => $output,
@@ -303,9 +317,13 @@ class Test_Security extends WP_UnitTestCase {
 
     /**
      * S12: Proxy llms.txt — script tags served as text/plain, not executable.
+     *
+     * The real security assertion is Content-Type: text/plain which prevents script execution.
+     * Verified via $GLOBALS['_fq_headers_sent'] (send_header() stores here in test context).
      */
     public function test_xss_proxy_response_scripts() {
         update_option( 'fq_site_slug', 'test-site-123' );
+        $GLOBALS['_fq_headers_sent'] = [];
         // Set transient with script content (simulating attacker-controlled upstream)
         set_transient( 'fq_proxy_llms_txt', '<script>alert(1)</script>', 3600 );
 
@@ -314,17 +332,18 @@ class Test_Security extends WP_UnitTestCase {
             global $wp_query;
             $wp_query->set( 'fq_serve', 'llms_txt' );
             do_action( 'template_redirect' );
-        } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+        } catch ( \Exception $e ) {}
         $output = ob_get_clean();
 
-        // Content is served as text/plain — Content-Type prevents execution
-        // The raw content is served as-is (proxy is transparent)
-        // S12 passes because Content-Type is text/plain; charset=utf-8
-        $this->assertStringContainsString( '<script>', $output,
-            'S12: text/plain Content-Type makes script tags non-executable — content passthrough is correct'
+        // Verify Content-Type is text/plain — prevents browser script execution
+        $header_str = implode( "\n", $GLOBALS['_fq_headers_sent'] ?? [] );
+        $this->assertStringContainsString( 'text/plain', $header_str,
+            'S12: Content-Type must be text/plain to prevent script execution'
         );
-        // The real assertion is that Content-Type is text/plain (verified via headers in Docker)
-        $this->assertTrue( true, 'S12: text/plain response cannot execute scripts in browser' );
+        // Content is served as-is (proxy is transparent) — script tags are safe as text/plain
+        $this->assertStringContainsString( '<script>', $output,
+            'S12: Raw content passthrough is correct for text/plain'
+        );
     }
 
     /**
@@ -491,7 +510,7 @@ class Test_Security extends WP_UnitTestCase {
             global $wp_query;
             $wp_query->set( 'fq_serve', '../../../wp-config' );
             do_action( 'template_redirect' );
-        } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+        } catch ( \Exception $e ) {}
         $output = ob_get_clean();
 
         $this->assertEmpty( $output,
@@ -520,7 +539,7 @@ class Test_Security extends WP_UnitTestCase {
             global $wp_query;
             $wp_query->set( 'fq_serve', 'llms_txt' );
             do_action( 'template_redirect' );
-        } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+        } catch ( \Exception $e ) {}
         $output = ob_get_clean();
 
         // The CRLF content is served as text/plain — no header injection
@@ -570,7 +589,7 @@ class Test_Security extends WP_UnitTestCase {
         // Capture wp_localize_script output
         ob_start();
         wp_set_current_user( $this->admin_id );
-        do_action( 'admin_enqueue_scripts', 'settings_page_flowblinq-geo' );
+        do_action( 'admin_enqueue_scripts', 'settings_page_fqgeo-settings' );
         wp_print_scripts();
         $output = ob_get_clean();
 
@@ -632,32 +651,38 @@ class Test_Security extends WP_UnitTestCase {
         $_POST['nonce']    = $_REQUEST['nonce'];
         $_POST['url']      = 'https://attacker.com/evil';
 
-        // Capture request to mock to verify what URL was sent
+        // Capture at priority 0 (before the redirect filter at priority 1) — return false
+        // to pass through so the redirect filter still handles the actual request
         $captured_body = null;
-        add_filter( 'pre_http_request', function( $preempt, $args, $url ) use ( &$captured_body ) {
-            if ( strpos( $url, 'api/v1/audit' ) !== false && $args['method'] === 'POST' ) {
-                $captured_body = json_decode( $args['body'], true );
+        $capture_cb = function( $preempt, $args, $url ) use ( &$captured_body ) {
+            if ( strpos( $url, 'api/v1/audit' ) !== false && ( $args['method'] ?? 'GET' ) === 'POST' ) {
+                $captured_body = json_decode( $args['body'] ?? '', true );
             }
-            return $preempt;
-        }, 5, 3 );
+            return $preempt; // pass through (false) — let redirect filter handle it
+        };
+        add_filter( 'pre_http_request', $capture_cb, 0, 3 );
 
         ob_start();
         try {
             $admin = new Flowblinq_Admin_Page();
             $admin->handle_ajax_run_audit();
-        } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+        } catch ( \Exception $e ) {}
         ob_get_clean();
 
         $this->remove_api_redirect_filter();
-        remove_all_filters( 'pre_http_request' );
+        remove_filter( 'pre_http_request', $capture_cb, 0 );
 
         if ( $captured_body !== null && isset( $captured_body['url'] ) ) {
             $this->assertStringNotContainsString( 'attacker.com', $captured_body['url'],
                 'S26: Audit URL must come from get_site_url(), not user input'
             );
         } else {
-            // Mock intercept ran before our filter — verify via mock log
-            $this->assertTrue( true, 'S26: URL sourcing verified by code inspection' );
+            // Verify via mock log that the submitted URL matches site_url
+            $log = wp_remote_get( $this->mock_base . '/__log', [ 'timeout' => 2 ] );
+            $log_body = is_wp_error( $log ) ? '' : wp_remote_retrieve_body( $log );
+            $this->assertStringNotContainsString( 'attacker.com', $log_body,
+                'S26: attacker URL must not appear in mock upstream log'
+            );
         }
     }
 
@@ -674,12 +699,20 @@ class Test_Security extends WP_UnitTestCase {
 
     /**
      * S28: Explicit Content-Type + X-Content-Type-Options: nosniff header.
+     *
+     * Verified via $GLOBALS['_fq_headers_sent'] (send_header() stores here in test context).
+     * Requires plugin patch in §b.10 (adds X-Content-Type-Options: nosniff to handle_serve).
      */
     public function test_content_type_explicit() {
-        $keys = [ 'llms_txt', 'llms_full_txt', 'business_json' ];
+        $expected_types = [
+            'llms_txt'      => 'text/plain',
+            'llms_full_txt' => 'text/plain',
+            'business_json' => 'application/json',
+        ];
         update_option( 'fq_site_slug', 'test-site-123' );
 
-        foreach ( $keys as $key ) {
+        foreach ( $expected_types as $key => $expected_type ) {
+            $GLOBALS['_fq_headers_sent'] = [];
             set_transient( 'fq_proxy_' . $key, 'content', 3600 );
 
             ob_start();
@@ -687,18 +720,17 @@ class Test_Security extends WP_UnitTestCase {
                 global $wp_query;
                 $wp_query->set( 'fq_serve', $key );
                 do_action( 'template_redirect' );
-            } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+            } catch ( \Exception $e ) {}
             ob_get_clean();
 
-            // X-Content-Type-Options is verified via Docker curl in AC-level tests
-            // Here we verify the proxy ran without error
-            $this->assertTrue( true, "S28: {$key} served without error" );
+            $header_str = implode( "\n", $GLOBALS['_fq_headers_sent'] ?? [] );
+            $this->assertStringContainsString( $expected_type, $header_str,
+                "S28: {$key} must have explicit Content-Type: {$expected_type}"
+            );
+            $this->assertStringContainsString( 'X-Content-Type-Options: nosniff', $header_str,
+                "S28: {$key} must have X-Content-Type-Options: nosniff header (§b.10 plugin patch)"
+            );
         }
-
-        // Verify X-Content-Type-Options is set by checking the send_header calls
-        // The actual assertion is: send_header('X-Content-Type-Options: nosniff') is called
-        // This requires the plugin patch in §b.10
-        $this->assertTrue( true, 'S28: X-Content-Type-Options: nosniff verified at Docker level' );
     }
 
     /**
@@ -718,7 +750,7 @@ class Test_Security extends WP_UnitTestCase {
         try {
             $admin = new Flowblinq_Admin_Page();
             $admin->handle_ajax_run_audit();
-        } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+        } catch ( \Exception $e ) {}
         $output = ob_get_clean();
 
         $this->remove_api_redirect_filter();
@@ -754,7 +786,7 @@ class Test_Security extends WP_UnitTestCase {
             try {
                 $admin = new Flowblinq_Admin_Page();
                 $admin->handle_ajax_clear_cache();
-            } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
+            } catch ( \Exception $e ) {}
             $output = ob_get_clean();
 
             $json = json_decode( $output, true );
