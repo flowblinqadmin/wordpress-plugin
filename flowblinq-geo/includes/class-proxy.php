@@ -138,6 +138,7 @@ class Flowblinq_Proxy {
         $this->send_header( 'Content-Type: ' . self::$serve_map[ $key ]['type'] );
         $this->send_header( 'Cache-Control: public, max-age=3600' );
         $this->send_header( 'X-Generator: FlowBlinq GEO' );
+        $this->send_header( 'X-Content-Type-Options: nosniff' );
         echo $content;
         $this->do_exit();
     }

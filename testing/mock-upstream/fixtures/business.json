@@ -1,0 +1,11 @@
+{
+  "name": "Flowblinq GEO Test Site",
+  "url": "http://example.com",
+  "services": ["AI Visibility Optimization", "GEO Audit Reports"],
+  "location": {
+    "street": "123 Test Street",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94105"
+  }
+}

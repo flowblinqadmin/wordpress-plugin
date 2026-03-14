@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="integration/bootstrap-wp.php"
+         colors="true"
+         stopOnFailure="false"
+         beStrictAboutTestsThatDoNotTestAnything="false">
+  <testsuites>
+    <testsuite name="integration">
+      <file>integration/test-integration.php</file>
+    </testsuite>
+    <testsuite name="security">
+      <file>security/test-security.php</file>
+    </testsuite>
+  </testsuites>
+</phpunit>

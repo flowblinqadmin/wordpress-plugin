@@ -1,0 +1,75 @@
+version: "3.8"
+
+networks:
+  fqgeo-test-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: testpass
+      MYSQL_DATABASE: wordpress_test
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - fqgeo-test-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ptestpass"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mock-upstream:
+    build:
+      context: .
+      dockerfile: Dockerfile.mock
+    ports:
+      - "8081:8080"
+    networks:
+      - fqgeo-test-net
+
+  wordpress:
+    image: wordpress:6.7-php8.3-apache
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: testpass
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "8080:80"
+    volumes:
+      - ../flowblinq-geo:/var/www/html/wp-content/plugins/flowblinq-geo
+    networks:
+      - fqgeo-test-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  wp-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.wp-test
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: wordpress_test
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: testpass
+      FQGEO_SERVE_BASE: http://mock-upstream:8080/api/serve
+      FQGEO_PROXY_TIMEOUT: "2"
+      WP_TESTS_DIR: /tmp/wordpress-tests-lib
+    volumes:
+      - ../flowblinq-geo:/app/plugin
+    networks:
+      - fqgeo-test-net
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mock-upstream:
+        condition: service_started
