@@ -25,6 +25,13 @@ class Flowblinq_Proxy {
         add_action( 'template_redirect',  [ $this, 'handle_serve' ] );
         add_action( 'wp_head',            [ $this, 'inject_schema_jsonld' ] );
         add_filter( 'robots_txt',         [ $this, 'append_robots_directives' ], 10, 2 );
+        // Prevent WordPress canonical 301 redirect on proxy routes (e.g. /llms.txt → /llms.txt/)
+        add_filter( 'redirect_canonical', function ( $redirect ) {
+            if ( get_query_var( 'fq_serve', '' ) ) {
+                return false;
+            }
+            return $redirect;
+        }, 10, 1 );
     }
 
     /**

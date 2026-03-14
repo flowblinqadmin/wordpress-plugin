@@ -12,24 +12,15 @@ case "${1:-all}" in
     exit 0
     ;;
   --staging-setup)
-    # Activate the plugin via WP-CLI and flush rewrite rules so pretty permalink
-    # routes (/llms.txt etc.) work. Run this once after --staging + WP setup wizard.
-    echo "Activating plugin and flushing rewrite rules via WP-CLI..."
-    docker compose run --rm \
-      -e WORDPRESS_DB_HOST=mysql \
-      -e WORDPRESS_DB_NAME=wordpress \
-      -e WORDPRESS_DB_USER=root \
-      -e WORDPRESS_DB_PASSWORD=testpass \
-      --entrypoint wp \
-      wordpress \
-      --allow-root --path=/var/www/html \
-      plugin activate flowblinq-geo
-    docker compose run --rm \
-      --entrypoint wp \
-      wordpress \
-      --allow-root --path=/var/www/html \
-      rewrite flush
-    echo "Plugin activated. Proxy routes should now work at http://localhost:8080/llms.txt"
+    # .htaccess is pre-seeded via bind mount (htaccess-seed) so rewrite rules are
+    # active immediately. After --staging, complete the WordPress install wizard at
+    # http://localhost:8080, then activate the plugin via Plugins → Installed Plugins.
+    # Proxy routes (/llms.txt etc.) will work once the plugin is activated.
+    echo "Staging setup notes:"
+    echo "  1. Complete WordPress install at http://localhost:8080"
+    echo "  2. Activate the Flowblinq GEO plugin via Plugins → Installed Plugins"
+    echo "  3. Proxy routes will be live: /llms.txt, /llms-full.txt, /.well-known/ucp.json"
+    echo "  .htaccess is pre-seeded — no permalink save required."
     exit 0
     ;;
   --down)          docker compose down -v; exit 0 ;;

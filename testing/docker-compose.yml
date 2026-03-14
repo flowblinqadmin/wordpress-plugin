@@ -52,6 +52,8 @@ services:
       - "8080:80"
     volumes:
       - ../flowblinq-geo:/var/www/html/wp-content/plugins/flowblinq-geo
+      # Pre-seed .htaccess so WordPress rewrite rules work immediately on first start
+      - ./htaccess-seed:/var/www/html/.htaccess
     networks:
       - fqgeo-test-net
     depends_on:
