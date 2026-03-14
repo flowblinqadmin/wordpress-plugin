@@ -16,7 +16,7 @@ RUN apk add --no-cache \
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Create working directories
-RUN mkdir -p /app/plugin /app/tests /app/vendor
+RUN mkdir -p /app/plugin /app/integration /app/security /app/vendor
 
 WORKDIR /app
 
@@ -28,9 +28,9 @@ RUN curl -sSo /usr/local/bin/install-wp-tests.sh \
     https://raw.githubusercontent.com/wp-cli/scaffold-command/main/templates/install-wp-tests.sh \
     && chmod +x /usr/local/bin/install-wp-tests.sh
 
-# Copy test files
-COPY integration/ /app/tests/integration/
-COPY security/ /app/tests/security/
+# Copy test files — paths match phpunit.xml bootstrap + file references
+COPY integration/ /app/integration/
+COPY security/ /app/security/
 COPY phpunit.xml /app/phpunit.xml
 
 # Entrypoint script
