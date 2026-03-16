@@ -3,7 +3,7 @@ Contributors: flowblinq
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -21,6 +21,7 @@ Flowblinq GEO makes your site visible to AI engines (ChatGPT, Claude, Perplexity
 * Injects Schema.org JSON-LD markup into every page's `<head>`
 * Adds `robots.txt` directives that invite AI crawlers to index your GEO files
 * Provides a one-click GEO audit with a visibility score and actionable recommendations
+* **Captures true traffic sources** — reads the HTTP Referer header server-side so LinkedIn, Twitter, and email referrals show up correctly in your analytics (these are stripped by browsers before JavaScript runs)
 
 **How it works:**
 
@@ -81,6 +82,9 @@ After your first audit, click **Verify My Changes** to trigger a second audit. T
 
 == Changelog ==
 
+= 1.1.0 =
+* Server-side referrer capture — sets `_geo_ref` first-party cookie on every page load so LinkedIn, Twitter, email, and Slack referrals are correctly attributed in GEO analytics. No configuration required.
+
 = 1.0.0 =
 * Proxy architecture — serves GEO files via WordPress rewrite rules
 * Schema JSON-LD injection with stale-while-revalidate caching
@@ -92,6 +96,9 @@ After your first audit, click **Verify My Changes** to trigger a second audit. T
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.1.0 =
+Adds automatic server-side referrer tracking. Update to see LinkedIn, Twitter, and email traffic correctly attributed in your GEO analytics dashboard. No configuration needed.
 
 = 1.0.0 =
 Major rewrite. Proxy architecture replaces local file storage. All GEO files are now served dynamically. No migration needed — activate and run an audit.

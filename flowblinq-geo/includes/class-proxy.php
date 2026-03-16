@@ -20,10 +20,55 @@ class Flowblinq_Proxy {
 
     public function __construct() {
         add_action( 'init',               [ $this, 'register_rewrite_rules' ] );
+        add_action( 'init',               [ $this, 'set_referrer_cookie' ], 1 );
         add_filter( 'query_vars',         [ $this, 'register_query_vars' ] );
         add_action( 'template_redirect',  [ $this, 'handle_serve' ] );
         add_action( 'wp_head',            [ $this, 'inject_schema_jsonld' ] );
         add_filter( 'robots_txt',         [ $this, 'append_robots_directives' ], 10, 2 );
+    }
+
+    /**
+     * Set _geo_ref first-party cookie so the GEO beacon can attribute traffic
+     * from LinkedIn, Twitter, and email correctly.
+     *
+     * LinkedIn and Twitter strip document.referrer in the browser via rel="noreferrer".
+     * PHP reads the HTTP Referer header before JS runs, giving us the true source.
+     * The beacon reads this cookie and sends it as `sr` in the collect payload.
+     */
+    public function set_referrer_cookie() {
+        if ( headers_sent() ) {
+            return;
+        }
+
+        // Only set on front-end page loads — skip admin, AJAX, REST, cron.
+        if ( is_admin() || wp_doing_ajax() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) || ( defined( 'DOING_CRON' ) && DOING_CRON ) ) {
+            return;
+        }
+
+        // Already have a session cookie — don't overwrite.
+        if ( ! empty( $_COOKIE['_geo_ref'] ) ) {
+            return;
+        }
+
+        $referer = isset( $_SERVER['HTTP_REFERER'] ) ? sanitize_url( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
+        if ( empty( $referer ) ) {
+            return;
+        }
+
+        // Don't attribute internal navigation (same-site).
+        $site_host   = wp_parse_url( home_url(), PHP_URL_HOST );
+        $referer_host = wp_parse_url( $referer, PHP_URL_HOST );
+        if ( $referer_host === $site_host ) {
+            return;
+        }
+
+        setcookie( '_geo_ref', $referer, [
+            'expires'  => time() + 1800,
+            'path'     => '/',
+            'secure'   => is_ssl(),
+            'httponly' => false,   // beacon JS must be able to read it
+            'samesite' => 'Strict',
+        ] );
     }
 
     /**
