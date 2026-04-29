@@ -999,9 +999,9 @@ class Test_Integration extends WP_UnitTestCase {
 
         // Include uninstall.php with the required constant
         if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
-            define( 'WP_UNINSTALL_PLUGIN', 'flowblinq-geo/flowblinq-geo.php' );
+            define( 'WP_UNINSTALL_PLUGIN', 'flowblinq-ai-boost/flowblinq-ai-boost.php' );
         }
-        include dirname( dirname( __DIR__ ) ) . '/flowblinq-geo/uninstall.php';
+        include dirname( dirname( __DIR__ ) ) . '/flowblinq-ai-boost/uninstall.php';
 
         $this->assertFalse( get_option( 'fq_client_id', false ), 'fq_client_id should be deleted' );
         $this->assertFalse( get_option( 'fq_client_secret', false ), 'fq_client_secret should be deleted' );

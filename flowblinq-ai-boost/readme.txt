@@ -1,18 +1,18 @@
-=== Flowblinq GEO ===
+=== Flowblinq AI Boost ===
 Contributors: flowblinq
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.2.1
+Stable tag: 1.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI visibility optimization for your WordPress site — powered by Flowblinq GEO.
+AI visibility optimization for your WordPress site — powered by Flowblinq AI Boost.
 
 == Description ==
 
-Flowblinq GEO makes your site visible to AI engines (ChatGPT, Claude, Perplexity) by serving standardized GEO files and injecting structured data — all automatically.
+Flowblinq AI Boost makes your site visible to AI engines (ChatGPT, Claude, Perplexity) by serving standardized GEO files and injecting structured data — all automatically.
 
 **What it does:**
 
@@ -31,9 +31,9 @@ Requires a free Flowblinq account. Get your API credentials at [geo.flowblinq.co
 
 == Installation ==
 
-1. Upload the `flowblinq-geo` folder to `/wp-content/plugins/`.
+1. Upload the `flowblinq-ai-boost` folder to `/wp-content/plugins/`.
 2. Activate the plugin in **WP Admin > Plugins**.
-3. Go to **Settings > Flowblinq GEO** and enter your Client ID and Client Secret.
+3. Go to **Settings > Flowblinq AI Boost** and enter your Client ID and Client Secret.
 4. **Important:** Your site must use "pretty permalinks" (any structure except "Plain"). Go to **Settings > Permalinks** if you haven't set this up.
 5. Go to **Tools > GEO Audit** and click **Run Free Audit** to submit your site.
 6. Once the audit completes, your GEO files are served automatically.
@@ -69,7 +69,7 @@ No. All content is proxied from the Flowblinq platform and cached in your WordPr
 
 = How often is the content refreshed? =
 
-Cached content expires every hour. On the next request after expiry, fresh content is fetched from the platform. You can also manually clear the cache from **Settings > Flowblinq GEO > Clear Cache**.
+Cached content expires every hour. On the next request after expiry, fresh content is fetched from the platform. You can also manually clear the cache from **Settings > Flowblinq AI Boost > Clear Cache**.
 
 = Does it work with caching plugins? =
 
@@ -89,7 +89,7 @@ After your first audit, click **Verify My Changes** to trigger a second audit. T
 
 == External Services ==
 
-This plugin connects to **geo.flowblinq.com** (the Flowblinq GEO platform), operated by Flowblinq. The plugin must transmit data to this service to function — it is the source of all served content.
+This plugin connects to **geo.flowblinq.com** (the Flowblinq AI Boost platform), operated by Flowblinq. The plugin must transmit data to this service to function — it is the source of all served content.
 
 **What is sent, when, and why:**
 
@@ -124,6 +124,13 @@ Stored data on your WordPress site:
 When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
 
 == Changelog ==
+
+= 1.3.0 =
+* Renamed plugin from "Flowblinq GEO" to "Flowblinq AI Boost" for clarity. New display name in the WordPress admin sidebar and on the plugin listing.
+* Plugin slug changed from flowblinq-geo to flowblinq-ai-boost (the folder under wp-content/plugins/).
+* All internal identifiers (option keys, transient keys, AJAX action names, version constant) are unchanged. No database migration is required when upgrading from 1.2.x.
+* Settings menu item now reads "Flowblinq AI Boost". Re-bookmark Settings > Flowblinq AI Boost if you had a direct link.
+
 
 = 1.2.1 =
 * WordPress.org Plugin Check (PCP) compliance — production code now reports zero errors and zero warnings against PCP severity 4.

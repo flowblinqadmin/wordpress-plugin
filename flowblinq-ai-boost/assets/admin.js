@@ -1,4 +1,4 @@
-/* Flowblinq GEO — Admin JS */
+/* Flowblinq AI Boost — Admin JS */
 /* global fqgeo, jQuery */
 
 (function ($) {

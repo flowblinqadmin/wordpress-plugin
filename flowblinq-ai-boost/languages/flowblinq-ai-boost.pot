@@ -1,8 +1,8 @@
 # Copyright (C) 2025 Flowblinq
-# This file is distributed under the same license as the Flowblinq GEO plugin.
+# This file is distributed under the same license as the Flowblinq AI Boost plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Flowblinq GEO 0.1.0\n"
+"Project-Id-Version: Flowblinq AI Boost 0.1.0\n"
 "Report-Msgid-Bugs-To: https://geo.flowblinq.com\n"
 "POT-Creation-Date: 2025-01-01T00:00:00+00:00\n"
 "MIME-Version: 1.0\n"
@@ -12,4 +12,4 @@ msgstr ""
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "X-Generator: Poedit 3.x\n"
-"X-Domain: flowblinq-geo\n"
+"X-Domain: flowblinq-ai-boost\n"

@@ -1,6 +1,6 @@
 <?php
 /**
- * Flowblinq GEO — Admin Page
+ * Flowblinq AI Boost — Admin Page
  *
  * Registers WP Admin pages for settings and the GEO audit tool.
  */
@@ -24,16 +24,16 @@ class Flowblinq_Admin_Page {
 
     public function add_menu_pages() {
         add_options_page(
-            __( 'Flowblinq GEO Settings', 'flowblinq-geo' ),
-            __( 'Flowblinq GEO', 'flowblinq-geo' ),
+            __( 'Flowblinq AI Boost Settings', 'flowblinq-ai-boost' ),
+            __( 'Flowblinq AI Boost', 'flowblinq-ai-boost' ),
             'manage_options',
             'fqgeo-settings',
             [ $this, 'render_settings_page' ]
         );
 
         add_management_page(
-            __( 'GEO Audit', 'flowblinq-geo' ),
-            __( 'GEO Audit', 'flowblinq-geo' ),
+            __( 'GEO Audit', 'flowblinq-ai-boost' ),
+            __( 'GEO Audit', 'flowblinq-ai-boost' ),
             'manage_options',
             'fqgeo-audit',
             [ $this, 'render_audit_page' ]
@@ -75,11 +75,11 @@ class Flowblinq_Admin_Page {
     public function render_settings_page() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Flowblinq GEO Settings', 'flowblinq-geo' ); ?></h1>
+            <h1><?php esc_html_e( 'Flowblinq AI Boost Settings', 'flowblinq-ai-boost' ); ?></h1>
 
             <?php if ( ! get_option( 'permalink_structure' ) ) : ?>
                 <div class="notice notice-error inline">
-                    <p><?php esc_html_e( 'Flowblinq GEO requires "pretty permalinks" to be enabled. Go to Settings → Permalinks and select any structure other than "Plain".', 'flowblinq-geo' ); ?></p>
+                    <p><?php esc_html_e( 'Flowblinq AI Boost requires "pretty permalinks" to be enabled. Go to Settings → Permalinks and select any structure other than "Plain".', 'flowblinq-ai-boost' ); ?></p>
                 </div>
             <?php endif; ?>
 
@@ -90,37 +90,37 @@ class Flowblinq_Admin_Page {
                 ?>
                 <table class="form-table">
                     <tr>
-                        <th scope="row"><label for="fq_client_id"><?php esc_html_e( 'Client ID', 'flowblinq-geo' ); ?></label></th>
+                        <th scope="row"><label for="fq_client_id"><?php esc_html_e( 'Client ID', 'flowblinq-ai-boost' ); ?></label></th>
                         <td>
                             <input type="text" id="fq_client_id" name="fq_client_id"
                                    value="<?php echo esc_attr( get_option( 'fq_client_id', '' ) ); ?>"
                                    class="regular-text" autocomplete="off" />
-                            <p class="description"><?php esc_html_e( 'Your Flowblinq API Client ID.', 'flowblinq-geo' ); ?></p>
+                            <p class="description"><?php esc_html_e( 'Your Flowblinq API Client ID.', 'flowblinq-ai-boost' ); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="fq_client_secret"><?php esc_html_e( 'Client Secret', 'flowblinq-geo' ); ?></label></th>
+                        <th scope="row"><label for="fq_client_secret"><?php esc_html_e( 'Client Secret', 'flowblinq-ai-boost' ); ?></label></th>
                         <td>
                             <?php $has_secret = (bool) get_option( 'fq_client_secret', '' ); ?>
                             <input type="password" id="fq_client_secret" name="fq_client_secret"
                                    value="<?php echo $has_secret ? '••••••••' : ''; ?>"
                                    class="regular-text" autocomplete="new-password" />
-                            <p class="description"><?php esc_html_e( 'Your Flowblinq API Client Secret. Stored securely in WordPress options.', 'flowblinq-geo' ); ?></p>
+                            <p class="description"><?php esc_html_e( 'Your Flowblinq API Client Secret. Stored securely in WordPress options.', 'flowblinq-ai-boost' ); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Site Slug', 'flowblinq-geo' ); ?></th>
+                        <th scope="row"><?php esc_html_e( 'Site Slug', 'flowblinq-ai-boost' ); ?></th>
                         <td>
                             <?php $slug = get_option( 'fq_site_slug', '' ); ?>
-                            <code><?php echo $slug ? esc_html( $slug ) : esc_html__( '(auto-populated after first audit)', 'flowblinq-geo' ); ?></code>
+                            <code><?php echo $slug ? esc_html( $slug ) : esc_html__( '(auto-populated after first audit)', 'flowblinq-ai-boost' ); ?></code>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php esc_html_e( 'Proxy Status', 'flowblinq-geo' ); ?></th>
+                        <th scope="row"><?php esc_html_e( 'Proxy Status', 'flowblinq-ai-boost' ); ?></th>
                         <td>
                             <span id="fqgeo-connection-status">&mdash;</span>
-                            <button type="button" id="fqgeo-test-connection" class="button"><?php esc_html_e( 'Test Connection', 'flowblinq-geo' ); ?></button>
-                            <button type="button" id="fqgeo-clear-cache" class="button"><?php esc_html_e( 'Clear Cache', 'flowblinq-geo' ); ?></button>
+                            <button type="button" id="fqgeo-test-connection" class="button"><?php esc_html_e( 'Test Connection', 'flowblinq-ai-boost' ); ?></button>
+                            <button type="button" id="fqgeo-clear-cache" class="button"><?php esc_html_e( 'Clear Cache', 'flowblinq-ai-boost' ); ?></button>
                         </td>
                     </tr>
                 </table>
@@ -131,7 +131,7 @@ class Flowblinq_Admin_Page {
                 printf(
                     wp_kses(
                         /* translators: %s: Flowblinq dashboard settings URL */
-                        __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">geo.flowblinq.com → Settings → API</a>.', 'flowblinq-geo' ),
+                        __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">geo.flowblinq.com → Settings → API</a>.', 'flowblinq-ai-boost' ),
                         [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
                     ),
                     esc_url( 'https://geo.flowblinq.com/dashboard/settings' )
@@ -148,7 +148,7 @@ class Flowblinq_Admin_Page {
         $configured    = $client_id && $client_secret;
         ?>
         <div class="wrap" id="fqgeo-wrap">
-            <h1><?php esc_html_e( 'GEO Audit', 'flowblinq-geo' ); ?></h1>
+            <h1><?php esc_html_e( 'GEO Audit', 'flowblinq-ai-boost' ); ?></h1>
 
             <?php if ( ! $configured ) : ?>
                 <div class="notice notice-warning">
@@ -157,7 +157,7 @@ class Flowblinq_Admin_Page {
                         printf(
                             wp_kses(
                                 /* translators: %s: WP admin URL of the Flowblinq settings page */
-                                __( 'Please <a href="%s">configure your Flowblinq API credentials</a> first.', 'flowblinq-geo' ),
+                                __( 'Please <a href="%s">configure your Flowblinq API credentials</a> first.', 'flowblinq-ai-boost' ),
                                 [ 'a' => [ 'href' => [] ] ]
                             ),
                             esc_url( admin_url( 'options-general.php?page=fqgeo-settings' ) )
@@ -167,36 +167,36 @@ class Flowblinq_Admin_Page {
                 </div>
             <?php else : ?>
                 <?php /* translators: %s: site URL of the WordPress installation */ ?>
-                <p><?php printf( esc_html__( 'Site: %s', 'flowblinq-geo' ), esc_html( get_site_url() ) ); ?></p>
+                <p><?php printf( esc_html__( 'Site: %s', 'flowblinq-ai-boost' ), esc_html( get_site_url() ) ); ?></p>
 
                 <div id="fqgeo-actions">
-                    <button id="fqgeo-run" class="button button-primary"><?php esc_html_e( 'Run Free Audit', 'flowblinq-geo' ); ?></button>
-                    <button id="fqgeo-verify" class="button" style="display:none"><?php esc_html_e( 'Verify My Changes', 'flowblinq-geo' ); ?></button>
+                    <button id="fqgeo-run" class="button button-primary"><?php esc_html_e( 'Run Free Audit', 'flowblinq-ai-boost' ); ?></button>
+                    <button id="fqgeo-verify" class="button" style="display:none"><?php esc_html_e( 'Verify My Changes', 'flowblinq-ai-boost' ); ?></button>
                 </div>
 
                 <div id="fqgeo-progress" style="display:none">
-                    <p id="fqgeo-status"><?php esc_html_e( 'Starting audit…', 'flowblinq-geo' ); ?></p>
+                    <p id="fqgeo-status"><?php esc_html_e( 'Starting audit…', 'flowblinq-ai-boost' ); ?></p>
                     <progress id="fqgeo-bar" max="100" value="0"></progress>
                 </div>
 
                 <div id="fqgeo-results" style="display:none">
-                    <h2><?php esc_html_e( 'Audit Results', 'flowblinq-geo' ); ?></h2>
+                    <h2><?php esc_html_e( 'Audit Results', 'flowblinq-ai-boost' ); ?></h2>
                     <div id="fqgeo-scorecard"></div>
 
                     <?php if ( get_option( 'fq_site_slug' ) ) : ?>
                         <div class="notice notice-success inline">
-                            <p><?php esc_html_e( 'Proxy is active — your GEO files are being served automatically.', 'flowblinq-geo' ); ?></p>
+                            <p><?php esc_html_e( 'Proxy is active — your GEO files are being served automatically.', 'flowblinq-ai-boost' ); ?></p>
                         </div>
                     <?php endif; ?>
 
                     <div id="fqgeo-comparison" style="display:none">
-                        <h3><?php esc_html_e( 'Before / After', 'flowblinq-geo' ); ?></h3>
+                        <h3><?php esc_html_e( 'Before / After', 'flowblinq-ai-boost' ); ?></h3>
                         <table class="widefat" id="fqgeo-before-after">
                             <thead>
                                 <tr>
-                                    <th><?php esc_html_e( 'Metric', 'flowblinq-geo' ); ?></th>
-                                    <th><?php esc_html_e( 'Before', 'flowblinq-geo' ); ?></th>
-                                    <th><?php esc_html_e( 'After', 'flowblinq-geo' ); ?></th>
+                                    <th><?php esc_html_e( 'Metric', 'flowblinq-ai-boost' ); ?></th>
+                                    <th><?php esc_html_e( 'Before', 'flowblinq-ai-boost' ); ?></th>
+                                    <th><?php esc_html_e( 'After', 'flowblinq-ai-boost' ); ?></th>
                                 </tr>
                             </thead>
                             <tbody></tbody>

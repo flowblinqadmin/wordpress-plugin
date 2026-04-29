@@ -1,37 +1,37 @@
 <?php
 /*
- * Plugin Name:       Flowblinq GEO
+ * Plugin Name:       Flowblinq AI Boost
  * Plugin URI:        https://geo.flowblinq.com
  * Description:       AI visibility optimization for your WordPress site.
- * Version:           1.2.1
+ * Version:           1.3.0
  * Author:            Flowblinq
  * Author URI:        https://flowblinq.com
  * License:           GPL v2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       flowblinq-geo
+ * Text Domain:       flowblinq-ai-boost
  * Domain Path:       /languages
  */
 
 /*
- * Flowblinq GEO is free software: you can redistribute it and/or
+ * Flowblinq AI Boost is free software: you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as published
  * by the Free Software Foundation, either version 2 of the License, or
  * any later version.
  *
- * Flowblinq GEO is distributed in the hope that it will be useful,
+ * Flowblinq AI Boost is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along
- * with Flowblinq GEO. If not, see https://www.gnu.org/licenses/.
+ * with Flowblinq AI Boost. If not, see https://www.gnu.org/licenses/.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'FQGEO_VERSION', '1.2.1' );
+define( 'FQGEO_VERSION', '1.3.0' );
 define( 'FQGEO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FQGEO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

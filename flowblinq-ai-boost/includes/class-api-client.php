@@ -1,6 +1,6 @@
 <?php
 /**
- * Flowblinq GEO — API Client
+ * Flowblinq AI Boost — API Client
  *
  * Handles all HTTP communication with geo.flowblinq.com.
  * Uses WordPress HTTP API (wp_remote_*) — no cURL direct calls.

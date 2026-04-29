@@ -38,10 +38,10 @@ tests_add_filter( 'muplugins_loaded', function () {
     }
 
     // Load the plugin
-    $plugin_path = dirname( dirname( __DIR__ ) ) . '/flowblinq-geo/flowblinq-geo.php';
+    $plugin_path = dirname( dirname( __DIR__ ) ) . '/flowblinq-ai-boost/flowblinq-ai-boost.php';
     if ( ! file_exists( $plugin_path ) ) {
         // Try bind-mount path inside Docker
-        $plugin_path = '/app/plugin/flowblinq-geo.php';
+        $plugin_path = '/app/plugin/flowblinq-ai-boost.php';
     }
     require $plugin_path;
 } );

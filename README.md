@@ -6,13 +6,13 @@ Monorepo for Flowblinq WordPress plugins.
 
 | Plugin | Directory | Description |
 |--------|-----------|-------------|
-| [Flowblinq GEO](flowblinq-geo/) | `flowblinq-geo/` | AI visibility optimization — proxy-serves GEO files and injects schema markup |
+| [Flowblinq AI Boost](flowblinq-ai-boost/) | `flowblinq-ai-boost/` | AI visibility optimization — proxy-serves GEO files and injects schema markup |
 
 ## Repository Structure
 
 ```
-flowblinq-geo/
-  flowblinq-geo.php        # Plugin bootstrap (activation/deactivation hooks)
+flowblinq-ai-boost/
+  flowblinq-ai-boost.php        # Plugin bootstrap (activation/deactivation hooks)
   uninstall.php             # Clean removal of all options and transients
   includes/
     constants.php           # Configurable defaults (timeouts, TTLs, size limits)
@@ -65,7 +65,7 @@ Admin UI at **Tools > GEO Audit** submits the site URL to the Flowblinq API, pol
 
 ### Admin Settings
 
-**Settings > Flowblinq GEO** provides:
+**Settings > Flowblinq AI Boost** provides:
 - Client ID / Client Secret fields (secret masked after save)
 - Site slug display (auto-populated from first audit)
 - Test Connection button (verifies upstream proxy is reachable)
@@ -101,7 +101,7 @@ All defaults are defined in `includes/constants.php` and can be overridden by de
 Tests are standalone PHP — no PHPUnit or WordPress test harness required:
 
 ```bash
-cd flowblinq-geo
+cd flowblinq-ai-boost
 php tests/test-proxy.php
 ```
 

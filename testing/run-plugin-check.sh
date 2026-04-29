@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the WordPress.org Plugin Check (PCP) tool against flowblinq-geo.
+# Run the WordPress.org Plugin Check (PCP) tool against flowblinq-ai-boost.
 # This is the same tool the WP.org review team uses — running it before
 # submission catches almost everything they would flag.
 #
@@ -59,13 +59,13 @@ echo "=== install + activate plugin-check from wordpress.org ==="
 run_wp plugin install plugin-check --activate --force
 
 echo ""
-echo "=== activate flowblinq-geo plugin (already bind-mounted) ==="
-run_wp plugin activate flowblinq-geo
+echo "=== activate flowblinq-ai-boost plugin (already bind-mounted) ==="
+run_wp plugin activate flowblinq-ai-boost
 
 echo ""
-echo "=== run plugin-check against flowblinq-geo ==="
+echo "=== run plugin-check against flowblinq-ai-boost ==="
 echo ""
-run_wp plugin check flowblinq-geo --severity=4 --format=table || PCP_EXIT=$?
+run_wp plugin check flowblinq-ai-boost --severity=4 --format=table || PCP_EXIT=$?
 
 echo ""
 echo "=== done ==="
