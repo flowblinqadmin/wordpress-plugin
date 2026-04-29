@@ -130,6 +130,7 @@ class Flowblinq_Admin_Page {
                 <?php
                 printf(
                     wp_kses(
+                        /* translators: %s: Flowblinq dashboard settings URL */
                         __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">geo.flowblinq.com → Settings → API</a>.', 'flowblinq-geo' ),
                         [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
                     ),
@@ -155,6 +156,7 @@ class Flowblinq_Admin_Page {
                         <?php
                         printf(
                             wp_kses(
+                                /* translators: %s: WP admin URL of the Flowblinq settings page */
                                 __( 'Please <a href="%s">configure your Flowblinq API credentials</a> first.', 'flowblinq-geo' ),
                                 [ 'a' => [ 'href' => [] ] ]
                             ),
@@ -164,6 +166,7 @@ class Flowblinq_Admin_Page {
                     </p>
                 </div>
             <?php else : ?>
+                <?php /* translators: %s: site URL of the WordPress installation */ ?>
                 <p><?php printf( esc_html__( 'Site: %s', 'flowblinq-geo' ), esc_html( get_site_url() ) ); ?></p>
 
                 <div id="fqgeo-actions">
@@ -249,7 +252,8 @@ class Flowblinq_Admin_Page {
     public function handle_ajax_poll_audit() {
         $this->verify_request( 'fqgeo_poll_audit' );
 
-        $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified via check_ajax_referer in $this->verify_request() above.
+        $audit_id = isset( $_POST['audit_id'] ) ? sanitize_text_field( wp_unslash( $_POST['audit_id'] ) ) : '';
         if ( ! $audit_id ) {
             wp_send_json_error( [ 'message' => 'audit_id required' ] );
         }
@@ -266,7 +270,8 @@ class Flowblinq_Admin_Page {
     public function handle_ajax_verify() {
         $this->verify_request( 'fqgeo_verify' );
 
-        $audit_id = sanitize_text_field( $_POST['audit_id'] ?? '' );
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified via check_ajax_referer in $this->verify_request() above.
+        $audit_id = isset( $_POST['audit_id'] ) ? sanitize_text_field( wp_unslash( $_POST['audit_id'] ) ) : '';
         if ( ! $audit_id ) {
             wp_send_json_error( [ 'message' => 'audit_id required' ] );
         }

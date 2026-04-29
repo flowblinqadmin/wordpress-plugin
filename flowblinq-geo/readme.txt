@@ -2,8 +2,8 @@
 Contributors: flowblinq
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
-Tested up to: 6.7
-Stable tag: 1.2.0
+Tested up to: 6.9
+Stable tag: 1.2.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -124,6 +124,16 @@ Stored data on your WordPress site:
 When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
 
 == Changelog ==
+
+= 1.2.1 =
+* WordPress.org Plugin Check (PCP) compliance — production code now reports zero errors and zero warnings against PCP severity 4.
+* Tested up to: 6.7 → 6.9.
+* Removed manual load_plugin_textdomain call (auto-loaded by WordPress core since 4.6 for WordPress.org-hosted plugins).
+* error_log calls in the proxy are now wrapped in WP_DEBUG checks (production-safe).
+* Added wp_unslash() before sanitize_text_field on POST inputs (correctness improvement).
+* Added i18n translators-comments above all \%s placeholder strings.
+* Inline phpcs:ignore comments with justifications on the proxy pass-through and nonce-via-helper false positives.
+
 
 = 1.2.0 =
 * Added explicit External Services disclosure and Privacy section to readme (WordPress.org compliance).

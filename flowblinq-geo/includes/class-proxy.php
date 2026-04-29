@@ -146,6 +146,7 @@ class Flowblinq_Proxy {
         $this->send_header( 'Cache-Control: public, max-age=3600' );
         $this->send_header( 'X-Generator: FlowBlinq GEO' );
         $this->send_header( 'X-Content-Type-Options: nosniff' );
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $content is plain-text/JSON from the controlled FlowBlinq API; binary-safe pass-through required for llms.txt fidelity.
         echo $content;
         $this->do_exit();
     }
@@ -163,19 +164,19 @@ class Flowblinq_Proxy {
         $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
 
         if ( is_wp_error( $response ) ) {
-            error_log( '[Flowblinq GEO] Upstream timeout: ' . $key );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { error_log( '[Flowblinq GEO] Upstream timeout: ' . $key ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated above; production-safe.
             return new WP_Error( 'fqgeo_upstream_timeout', 'Gateway timeout' );
         }
 
         $code = wp_remote_retrieve_response_code( $response );
         if ( $code !== 200 ) {
-            error_log( '[Flowblinq GEO] Upstream error: ' . $key . ' HTTP ' . $code );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { error_log( '[Flowblinq GEO] Upstream error: ' . $key . ' HTTP ' . $code ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated above; production-safe.
             return new WP_Error( 'fqgeo_upstream_error', 'Service temporarily unavailable' );
         }
 
         $body = wp_remote_retrieve_body( $response );
         if ( strlen( $body ) > FQGEO_PROXY_MAX_SIZE ) {
-            error_log( '[Flowblinq GEO] Upstream response too large: ' . $key );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { error_log( '[Flowblinq GEO] Upstream response too large: ' . $key ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated above; production-safe.
             return new WP_Error( 'fqgeo_upstream_too_large', 'Response too large' );
         }
 
@@ -272,19 +273,19 @@ class Flowblinq_Proxy {
         $response = wp_remote_get( $url, [ 'timeout' => FQGEO_PROXY_TIMEOUT ] );
 
         if ( is_wp_error( $response ) ) {
-            error_log( '[Flowblinq GEO] Schema fetch error: timeout' );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { error_log( '[Flowblinq GEO] Schema fetch error: timeout' ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated above; production-safe.
             return false;
         }
 
         $code = wp_remote_retrieve_response_code( $response );
         if ( $code !== 200 ) {
-            error_log( '[Flowblinq GEO] Schema fetch error: HTTP ' . $code );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { error_log( '[Flowblinq GEO] Schema fetch error: HTTP ' . $code ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated above; production-safe.
             return false;
         }
 
         $body = wp_remote_retrieve_body( $response );
         if ( strlen( $body ) > FQGEO_PROXY_MAX_SIZE ) {
-            error_log( '[Flowblinq GEO] Schema response too large' );
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) { error_log( '[Flowblinq GEO] Schema response too large' ); } // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- WP_DEBUG-gated above; production-safe.
             return false;
         }
 
@@ -340,6 +341,7 @@ class Flowblinq_Proxy {
         if ( ! class_exists( 'Flowblinq_GEO_Exit_Exception', false ) ) {
             header( $header ); // @codeCoverageIgnore
         } else {
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- _fq_ is the plugin prefix; matches existing fq_* options/transients namespace.
             $GLOBALS['_fq_headers_sent'][] = $header;
         }
     }
