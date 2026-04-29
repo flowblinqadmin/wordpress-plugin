@@ -3,7 +3,7 @@
  * Plugin Name:       Flowblinq GEO
  * Plugin URI:        https://geo.flowblinq.com
  * Description:       AI visibility optimization for your WordPress site.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Author:            Flowblinq
  * Author URI:        https://flowblinq.com
  * License:           GPL v2 or later
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'FQGEO_VERSION', '1.1.0' );
+define( 'FQGEO_VERSION', '1.2.0' );
 define( 'FQGEO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FQGEO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 

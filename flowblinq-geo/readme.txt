@@ -3,7 +3,7 @@ Contributors: flowblinq
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -37,6 +37,13 @@ Requires a free Flowblinq account. Get your API credentials at [geo.flowblinq.co
 4. **Important:** Your site must use "pretty permalinks" (any structure except "Plain"). Go to **Settings > Permalinks** if you haven't set this up.
 5. Go to **Tools > GEO Audit** and click **Run Free Audit** to submit your site.
 6. Once the audit completes, your GEO files are served automatically.
+
+== Screenshots ==
+
+1. Settings page — enter your Flowblinq Client ID and Client Secret, test the connection, view your assigned site slug.
+2. GEO Audit page — one-click audit submission with live progress bar.
+3. Audit Results — visibility scorecard with actionable recommendations.
+4. Verify My Changes — before/after comparison after a re-audit.
 
 == Frequently Asked Questions ==
 
@@ -80,7 +87,50 @@ Deactivating removes the rewrite rules (GEO paths stop working). Deleting the pl
 
 After your first audit, click **Verify My Changes** to trigger a second audit. The plugin then shows a before/after comparison of your GEO visibility score.
 
+== External Services ==
+
+This plugin connects to **geo.flowblinq.com** (the Flowblinq GEO platform), operated by Flowblinq. The plugin must transmit data to this service to function — it is the source of all served content.
+
+**What is sent, when, and why:**
+
+* When you click **Run Free Audit**, the plugin sends a JSON payload containing your site's URL (e.g. `https://yoursite.com`) to `https://geo.flowblinq.com/api/v1/audit`. This is required to start the AI-visibility audit.
+* When you click **Verify My Changes**, the plugin sends an empty JSON payload to `https://geo.flowblinq.com/api/v1/audit/{audit_id}/verify` (referencing the audit you started). This re-runs the audit so before/after results can be compared.
+* When a visitor (human or AI crawler) requests `/llms.txt`, `/llms-full.txt`, or `/.well-known/ucp.json` on your site, the plugin fetches the corresponding file from `https://geo.flowblinq.com/api/serve/{your-site-slug}/...` and caches the response for one hour. Only your site slug is sent — no visitor data.
+* Authentication uses the OAuth 2.0 client_credentials flow against `https://geo.flowblinq.com/api/oauth/token`. Your Client ID and Client Secret are sent only in this request, and the resulting access token is cached in the WordPress transients table for under one hour.
+
+**No visitor data is sent.** The plugin transmits only your site URL, your site slug, and your API credentials. It does not transmit visitor IP addresses, user agents, browsing history, form submissions, or any other end-user information.
+
+**Service terms and privacy policy:** by using this plugin you agree to the Flowblinq Terms of Service at [https://flowblinq.com/terms](https://flowblinq.com/terms) and Privacy Policy at [https://flowblinq.com/privacy](https://flowblinq.com/privacy).
+
+== Privacy ==
+
+This plugin transmits the following data to **geo.flowblinq.com** (Flowblinq):
+
+* Your site URL (when you start an audit).
+* Your assigned site slug (when fetching `/llms.txt` and other GEO files for visitors).
+* Your API credentials (Client ID and Client Secret) over HTTPS, only when requesting an access token.
+
+This plugin **does not** collect, store, or transmit:
+
+* Visitor IP addresses, browsers, or session identifiers.
+* End-user form submissions or comments.
+* Any personally identifiable information about anyone other than the site administrator who configures the plugin.
+
+Stored data on your WordPress site:
+
+* `fq_client_id`, `fq_client_secret`, `fq_site_slug`, `fq_active_audit_id` in the `wp_options` table (settings).
+* Cached response payloads in the WordPress transients table (`fq_proxy_*`, `fq_access_token`) — auto-expire within one hour.
+
+When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
+
 == Changelog ==
+
+= 1.2.0 =
+* Added explicit External Services disclosure and Privacy section to readme (WordPress.org compliance).
+* Added screenshot descriptions for the WordPress.org listing.
+* GPL v2 Copyright line added to LICENSE.
+* Internal: Docker integration test infrastructure for staging (ES-044), .htaccess seed + canonical redirect handling.
+
 
 = 1.1.0 =
 * Server-side referrer capture — sets `_geo_ref` first-party cookie on every page load so LinkedIn, Twitter, email, and Slack referrals are correctly attributed in GEO analytics. No configuration required.
