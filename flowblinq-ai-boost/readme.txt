@@ -1,5 +1,5 @@
 === Flowblinq AI Boost ===
-Contributors: flowblinq
+Contributors: adityanittur
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
 Tested up to: 6.9
@@ -12,20 +12,25 @@ AI visibility optimization for your WordPress site — powered by Flowblinq AI B
 
 == Description ==
 
-Flowblinq AI Boost makes your site visible to AI engines (ChatGPT, Claude, Perplexity) by serving standardized GEO files and injecting structured data — all automatically.
+**This is not a local llms.txt generator.** It is a thin server-side proxy to a hosted backend that continuously regenerates your AI-discovery files as AI search platforms change their ranking signals — so the files your site serves stay current without you re-running anything.
 
-**What it does:**
+**Why this is different from the 150+ other llms.txt plugins:**
 
-* Serves `/llms.txt` and `/llms-full.txt` so AI models can discover and cite your content
-* Serves `/.well-known/ucp.json` (business profile for AI consumption)
-* Injects Schema.org JSON-LD markup into every page's `<head>`
-* Adds `robots.txt` directives that invite AI crawlers to index your GEO files
-* Provides a one-click GEO audit with a visibility score and actionable recommendations
-* **Captures true traffic sources** — reads the HTTP Referer header server-side so LinkedIn, Twitter, and email referrals show up correctly in your analytics (these are stripped by browsers before JavaScript runs)
+* **Hosted, continuously-updated content.** The plugin does not write files to your disk and does not re-generate locally on a schedule. The Flowblinq backend re-audits your site as ChatGPT, Claude, Perplexity, and Gemini change what they index. Your visitors hit `your-site.com/llms.txt` and get the freshest version.
+* **Four AI-targeted files served from one integration**, not one. The plugin proxies `/llms.txt`, `/llms-full.txt`, `/.well-known/ucp.json` (business profile for AI agents), and a per-page schema.org JSON-LD injection — covering text-discovery, deep-content, business-identity, and structured-markup at once.
+* **AI-citation attribution analytics.** A small server-side beacon captures real referrer information (LinkedIn, Twitter, email — all of which strip referrer headers before JavaScript runs) so your analytics show which AI platforms and social channels are actually citing your content.
+* **One-click audit with a visibility score** that benchmarks how often AI search platforms cite your site, with concrete recommendations.
 
-**How it works:**
+**What it does, summarized:**
 
-The plugin acts as a thin proxy. It registers WordPress rewrite rules for the GEO file paths, then serves content fetched from the Flowblinq platform. Responses are cached locally (1 hour) using WordPress Transients — no files are written to disk.
+* Serves `/llms.txt`, `/llms-full.txt`, `/.well-known/ucp.json` via WordPress rewrite rules — content fetched from the Flowblinq backend, cached locally (1 hour) using WordPress Transients. No files written to disk.
+* Injects Schema.org JSON-LD markup into every page's `<head>`, populated from the centralized audit.
+* Adds `robots.txt` directives inviting AI crawlers to index the AI-discovery files.
+* Provides a server-side AI-citation tracking beacon and an analytics dashboard.
+
+**Why a hosted backend instead of local generation?**
+
+Generative search ranking signals change weekly. A static llms.txt that you generate once and forget goes stale fast. A locally-regenerated one requires you to re-run an audit every time AI platforms shift their indexing. The Flowblinq backend monitors those shifts and updates your file automatically — your site keeps serving the current version with zero ongoing work.
 
 Requires a free Flowblinq account. Get your API credentials at [geo.flowblinq.com](https://geo.flowblinq.com/dashboard/settings).
 
@@ -118,8 +123,8 @@ This plugin **does not** collect, store, or transmit:
 
 Stored data on your WordPress site:
 
-* `fq_client_id`, `fq_client_secret`, `fq_site_slug`, `fq_active_audit_id` in the `wp_options` table (settings).
-* Cached response payloads in the WordPress transients table (`fq_proxy_*`, `fq_access_token`) — auto-expire within one hour.
+* `fqgeo_client_id`, `fqgeo_client_secret`, `fqgeo_site_slug`, `fqgeo_active_audit_id` in the `wp_options` table (settings).
+* Cached response payloads in the WordPress transients table (`fqgeo_proxy_*`, `fqgeo_access_token`) — auto-expire within one hour.
 
 When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
 

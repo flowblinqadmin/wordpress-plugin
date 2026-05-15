@@ -27,7 +27,7 @@ class Flowblinq_Proxy {
         add_filter( 'robots_txt',         [ $this, 'append_robots_directives' ], 10, 2 );
         // Prevent WordPress canonical 301 redirect on proxy routes (e.g. /llms.txt → /llms.txt/)
         add_filter( 'redirect_canonical', function ( $redirect ) {
-            if ( get_query_var( 'fq_serve', '' ) ) {
+            if ( get_query_var( 'fqgeo_serve', '' ) ) {
                 return false;
             }
             return $redirect;
@@ -82,19 +82,19 @@ class Flowblinq_Proxy {
      * Register rewrite rules for all proxy endpoints.
      */
     public function register_rewrite_rules() {
-        add_rewrite_rule( '^llms\\.txt$',                'index.php?fq_serve=llms_txt', 'top' );
-        add_rewrite_rule( '^llms-full\\.txt$',           'index.php?fq_serve=llms_full_txt', 'top' );
-        add_rewrite_rule( '^\\.well-known/ucp\\.json$',  'index.php?fq_serve=business_json', 'top' );
+        add_rewrite_rule( '^llms\\.txt$',                'index.php?fqgeo_serve=llms_txt', 'top' );
+        add_rewrite_rule( '^llms-full\\.txt$',           'index.php?fqgeo_serve=llms_full_txt', 'top' );
+        add_rewrite_rule( '^\\.well-known/ucp\\.json$',  'index.php?fqgeo_serve=business_json', 'top' );
     }
 
     /**
-     * Register fq_serve query var.
+     * Register fqgeo_serve query var.
      *
      * @param array $vars
      * @return array
      */
     public function register_query_vars( array $vars ) {
-        $vars[] = 'fq_serve';
+        $vars[] = 'fqgeo_serve';
         return $vars;
     }
 
@@ -102,7 +102,7 @@ class Flowblinq_Proxy {
      * Main proxy handler — serves content from upstream or cache.
      */
     public function handle_serve() {
-        $key = get_query_var( 'fq_serve', '' );
+        $key = get_query_var( 'fqgeo_serve', '' );
         if ( empty( $key ) ) {
             return;
         }
@@ -111,13 +111,13 @@ class Flowblinq_Proxy {
             return;
         }
 
-        $slug = get_option( 'fq_site_slug', '' );
+        $slug = get_option( 'fqgeo_site_slug', '' );
         if ( empty( $slug ) ) {
             wp_die( 'Flowblinq AI Boost not configured', '', [ 'response' => 503 ] );
         }
 
         // Check transient cache
-        $content = get_transient( 'fq_proxy_' . $key );
+        $content = get_transient( 'fqgeo_proxy_' . $key );
 
         if ( false === $content ) {
             // Cache miss — fetch from upstream
@@ -136,7 +136,7 @@ class Flowblinq_Proxy {
             }
 
             // Cache the successful response
-            set_transient( 'fq_proxy_' . $key, $result, FQGEO_CACHE_TTL );
+            set_transient( 'fqgeo_proxy_' . $key, $result, FQGEO_CACHE_TTL );
             $content = $result;
         }
 
@@ -190,16 +190,16 @@ class Flowblinq_Proxy {
      * expired, and triggers a single background refresh via transient lock.
      */
     public function inject_schema_jsonld() {
-        $slug = get_option( 'fq_site_slug', '' );
+        $slug = get_option( 'fqgeo_site_slug', '' );
         if ( empty( $slug ) ) {
             return;
         }
 
-        $raw = get_transient( 'fq_proxy_schema_json' );
+        $raw = get_transient( 'fqgeo_proxy_schema_json' );
 
         if ( false === $raw ) {
             // Hard cache miss — check for stale value
-            $stale = get_option( '_fq_stale_schema_json', '' );
+            $stale = get_option( '_fqgeo_stale_schema_json', '' );
 
             if ( $stale !== '' ) {
                 // Serve stale content; trigger background refresh (lock prevents stampede)
@@ -241,7 +241,7 @@ class Flowblinq_Proxy {
             return $output;
         }
 
-        $slug = get_option( 'fq_site_slug', '' );
+        $slug = get_option( 'fqgeo_site_slug', '' );
         if ( empty( $slug ) ) {
             return $output;
         }
@@ -294,8 +294,8 @@ class Flowblinq_Proxy {
             return false;
         }
 
-        set_transient( 'fq_proxy_schema_json', $body, FQGEO_CACHE_TTL );
-        update_option( '_fq_stale_schema_json', $body, false );
+        set_transient( 'fqgeo_proxy_schema_json', $body, FQGEO_CACHE_TTL );
+        update_option( '_fqgeo_stale_schema_json', $body, false );
         return $body;
     }
 
@@ -307,15 +307,15 @@ class Flowblinq_Proxy {
      */
     private function maybe_refresh_schema( $slug ) {
         // Acquire lock — only one request refreshes at a time
-        if ( false !== get_transient( '_fq_lock_schema_json' ) ) {
+        if ( false !== get_transient( '_fqgeo_lock_schema_json' ) ) {
             return;
         }
-        set_transient( '_fq_lock_schema_json', 1, 30 );
+        set_transient( '_fqgeo_lock_schema_json', 1, 30 );
 
         // Non-blocking fetch in a shutdown action so page rendering isn't delayed
         add_action( 'shutdown', function () use ( $slug ) {
             $this->fetch_schema_upstream( $slug );
-            delete_transient( '_fq_lock_schema_json' );
+            delete_transient( '_fqgeo_lock_schema_json' );
         } );
     }
 
@@ -323,11 +323,11 @@ class Flowblinq_Proxy {
      * Clear all proxy transients.
      */
     public static function clear_cache() {
-        delete_transient( 'fq_proxy_llms_txt' );
-        delete_transient( 'fq_proxy_llms_full_txt' );
-        delete_transient( 'fq_proxy_business_json' );
-        delete_transient( 'fq_proxy_schema_json' );
-        delete_transient( '_fq_lock_schema_json' );
+        delete_transient( 'fqgeo_proxy_llms_txt' );
+        delete_transient( 'fqgeo_proxy_llms_full_txt' );
+        delete_transient( 'fqgeo_proxy_business_json' );
+        delete_transient( 'fqgeo_proxy_schema_json' );
+        delete_transient( '_fqgeo_lock_schema_json' );
         // Stale option preserved intentionally — allows stale-while-revalidate
         // to serve content immediately after cache clear
     }
@@ -341,8 +341,8 @@ class Flowblinq_Proxy {
         if ( ! class_exists( 'Flowblinq_GEO_Exit_Exception', false ) ) {
             header( $header ); // @codeCoverageIgnore
         } else {
-            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- _fq_ is the plugin prefix; matches existing fq_* options/transients namespace.
-            $GLOBALS['_fq_headers_sent'][] = $header;
+            // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- _fqgeo_ is the plugin prefix; matches existing fqgeo_* options/transients namespace.
+            $GLOBALS['_fqgeo_headers_sent'][] = $header;
         }
     }
 

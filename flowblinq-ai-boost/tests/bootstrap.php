@@ -11,59 +11,59 @@ define( 'WP_UNINSTALL_PLUGIN', true );
 
 // ── Global state stores ─────────────────────────────────────────────────────
 
-$GLOBALS['_fq_options']    = [];
-$GLOBALS['_fq_transients'] = [];
-$GLOBALS['_fq_actions']    = [];
-$GLOBALS['_fq_filters']    = [];
-$GLOBALS['_fq_query_vars'] = [];
-$GLOBALS['_fq_rewrite_rules'] = [];
-$GLOBALS['_fq_remote_responses'] = [];   // stack: each call shifts one off
-$GLOBALS['_fq_wp_die_calls'] = [];
-$GLOBALS['_fq_headers_sent'] = [];
-$GLOBALS['_fq_output'] = '';
-$GLOBALS['_fq_exit_called'] = false;
-$GLOBALS['_fq_current_query_vars'] = [];
+$GLOBALS['_fqgeo_options']    = [];
+$GLOBALS['_fqgeo_transients'] = [];
+$GLOBALS['_fqgeo_actions']    = [];
+$GLOBALS['_fqgeo_filters']    = [];
+$GLOBALS['_fqgeo_query_vars'] = [];
+$GLOBALS['_fqgeo_rewrite_rules'] = [];
+$GLOBALS['_fqgeo_remote_responses'] = [];   // stack: each call shifts one off
+$GLOBALS['_fqgeo_wp_die_calls'] = [];
+$GLOBALS['_fqgeo_headers_sent'] = [];
+$GLOBALS['_fqgeo_output'] = '';
+$GLOBALS['_fqgeo_exit_called'] = false;
+$GLOBALS['_fqgeo_current_query_vars'] = [];
 
 // ── WordPress function stubs ────────────────────────────────────────────────
 
 function get_option( $key, $default = false ) {
-    return array_key_exists( $key, $GLOBALS['_fq_options'] ) ? $GLOBALS['_fq_options'][ $key ] : $default;
+    return array_key_exists( $key, $GLOBALS['_fqgeo_options'] ) ? $GLOBALS['_fqgeo_options'][ $key ] : $default;
 }
 
 function update_option( $key, $value, $autoload = null ) {
-    $GLOBALS['_fq_options'][ $key ] = $value;
+    $GLOBALS['_fqgeo_options'][ $key ] = $value;
     return true;
 }
 
 function delete_option( $key ) {
-    unset( $GLOBALS['_fq_options'][ $key ] );
+    unset( $GLOBALS['_fqgeo_options'][ $key ] );
     return true;
 }
 
 function get_transient( $key ) {
-    return array_key_exists( $key, $GLOBALS['_fq_transients'] ) ? $GLOBALS['_fq_transients'][ $key ] : false;
+    return array_key_exists( $key, $GLOBALS['_fqgeo_transients'] ) ? $GLOBALS['_fqgeo_transients'][ $key ] : false;
 }
 
 function set_transient( $key, $value, $ttl = 0 ) {
-    $GLOBALS['_fq_transients'][ $key ] = $value;
+    $GLOBALS['_fqgeo_transients'][ $key ] = $value;
     return true;
 }
 
 function delete_transient( $key ) {
-    unset( $GLOBALS['_fq_transients'][ $key ] );
+    unset( $GLOBALS['_fqgeo_transients'][ $key ] );
     return true;
 }
 
 function add_action( $tag, $callback, $priority = 10, $accepted_args = 1 ) {
-    $GLOBALS['_fq_actions'][] = [ 'tag' => $tag, 'callback' => $callback, 'priority' => $priority ];
+    $GLOBALS['_fqgeo_actions'][] = [ 'tag' => $tag, 'callback' => $callback, 'priority' => $priority ];
 }
 
 function add_filter( $tag, $callback, $priority = 10, $accepted_args = 1 ) {
-    $GLOBALS['_fq_filters'][] = [ 'tag' => $tag, 'callback' => $callback, 'priority' => $priority ];
+    $GLOBALS['_fqgeo_filters'][] = [ 'tag' => $tag, 'callback' => $callback, 'priority' => $priority ];
 }
 
 function add_rewrite_rule( $regex, $redirect, $after = 'bottom' ) {
-    $GLOBALS['_fq_rewrite_rules'][] = [ 'regex' => $regex, 'redirect' => $redirect, 'after' => $after ];
+    $GLOBALS['_fqgeo_rewrite_rules'][] = [ 'regex' => $regex, 'redirect' => $redirect, 'after' => $after ];
 }
 
 function flush_rewrite_rules() {
@@ -71,29 +71,29 @@ function flush_rewrite_rules() {
 }
 
 function get_query_var( $var, $default = '' ) {
-    return isset( $GLOBALS['_fq_current_query_vars'][ $var ] ) ? $GLOBALS['_fq_current_query_vars'][ $var ] : $default;
+    return isset( $GLOBALS['_fqgeo_current_query_vars'][ $var ] ) ? $GLOBALS['_fqgeo_current_query_vars'][ $var ] : $default;
 }
 
 function wp_die( $message = '', $title = '', $args = [] ) {
-    $GLOBALS['_fq_wp_die_calls'][] = [ 'message' => $message, 'title' => $title, 'args' => $args ];
+    $GLOBALS['_fqgeo_wp_die_calls'][] = [ 'message' => $message, 'title' => $title, 'args' => $args ];
     throw new FQ_WP_Die_Exception( $message, isset( $args['response'] ) ? $args['response'] : 0 );
 }
 
 function wp_remote_get( $url, $args = [] ) {
-    return _fq_mock_remote( 'GET', $url, $args );
+    return _fqgeo_mock_remote( 'GET', $url, $args );
 }
 
 function wp_remote_post( $url, $args = [] ) {
-    return _fq_mock_remote( 'POST', $url, $args );
+    return _fqgeo_mock_remote( 'POST', $url, $args );
 }
 
-function _fq_mock_remote( $method, $url, $args ) {
-    $GLOBALS['_fq_last_remote_url'] = $url;
-    $GLOBALS['_fq_last_remote_args'] = $args;
-    $GLOBALS['_fq_remote_call_log'][] = [ 'method' => $method, 'url' => $url, 'args' => $args ];
+function _fqgeo_mock_remote( $method, $url, $args ) {
+    $GLOBALS['_fqgeo_last_remote_url'] = $url;
+    $GLOBALS['_fqgeo_last_remote_args'] = $args;
+    $GLOBALS['_fqgeo_remote_call_log'][] = [ 'method' => $method, 'url' => $url, 'args' => $args ];
 
-    if ( ! empty( $GLOBALS['_fq_remote_responses'] ) ) {
-        return array_shift( $GLOBALS['_fq_remote_responses'] );
+    if ( ! empty( $GLOBALS['_fqgeo_remote_responses'] ) ) {
+        return array_shift( $GLOBALS['_fqgeo_remote_responses'] );
     }
     return new WP_Error( 'http_request_failed', 'No mock response configured' );
 }
@@ -137,7 +137,7 @@ function sanitize_text_field( $str ) {
 }
 
 function status_header( $code ) {
-    $GLOBALS['_fq_headers_sent'][] = "HTTP/1.1 $code";
+    $GLOBALS['_fqgeo_headers_sent'][] = "HTTP/1.1 $code";
 }
 
 // Override native header() to capture in tests — use namespace trick not available,
@@ -146,11 +146,11 @@ function status_header( $code ) {
 // but tests still pass on output/status assertions.
 
 function register_activation_hook( $file, $callback ) {
-    $GLOBALS['_fq_activation_hooks'][] = $callback;
+    $GLOBALS['_fqgeo_activation_hooks'][] = $callback;
 }
 
 function register_deactivation_hook( $file, $callback ) {
-    $GLOBALS['_fq_deactivation_hooks'][] = $callback;
+    $GLOBALS['_fqgeo_deactivation_hooks'][] = $callback;
 }
 
 function wp_create_nonce( $action ) {
@@ -166,12 +166,12 @@ function current_user_can( $capability ) {
 }
 
 function wp_send_json_success( $data = null ) {
-    $GLOBALS['_fq_json_response'] = [ 'success' => true, 'data' => $data ];
+    $GLOBALS['_fqgeo_json_response'] = [ 'success' => true, 'data' => $data ];
     throw new FQ_Ajax_Exit_Exception( 'json_success' );
 }
 
 function wp_send_json_error( $data = null, $status_code = null ) {
-    $GLOBALS['_fq_json_response'] = [ 'success' => false, 'data' => $data ];
+    $GLOBALS['_fqgeo_json_response'] = [ 'success' => false, 'data' => $data ];
     throw new FQ_Ajax_Exit_Exception( 'json_error' );
 }
 
@@ -228,7 +228,7 @@ class Flowblinq_GEO_Exit_Exception extends \RuntimeException {}
 
 // ── Helper to build mock HTTP response ──────────────────────────────────────
 
-function fq_mock_response( $code, $body ) {
+function fqgeo_mock_response( $code, $body ) {
     return [
         'response' => [ 'code' => $code ],
         'body'     => $body,
@@ -237,19 +237,19 @@ function fq_mock_response( $code, $body ) {
 
 // ── Reset all global state ──────────────────────────────────────────────────
 
-function fq_reset_state() {
-    $GLOBALS['_fq_options']          = [];
-    $GLOBALS['_fq_transients']       = [];
-    $GLOBALS['_fq_actions']          = [];
-    $GLOBALS['_fq_filters']          = [];
-    $GLOBALS['_fq_query_vars']       = [];
-    $GLOBALS['_fq_rewrite_rules']    = [];
-    $GLOBALS['_fq_remote_responses'] = [];
-    $GLOBALS['_fq_remote_call_log']  = [];
-    $GLOBALS['_fq_wp_die_calls']     = [];
-    $GLOBALS['_fq_headers_sent']     = [];
-    $GLOBALS['_fq_output']           = '';
-    $GLOBALS['_fq_exit_called']      = false;
-    $GLOBALS['_fq_current_query_vars'] = [];
-    $GLOBALS['_fq_json_response']    = null;
+function fqgeo_reset_state() {
+    $GLOBALS['_fqgeo_options']          = [];
+    $GLOBALS['_fqgeo_transients']       = [];
+    $GLOBALS['_fqgeo_actions']          = [];
+    $GLOBALS['_fqgeo_filters']          = [];
+    $GLOBALS['_fqgeo_query_vars']       = [];
+    $GLOBALS['_fqgeo_rewrite_rules']    = [];
+    $GLOBALS['_fqgeo_remote_responses'] = [];
+    $GLOBALS['_fqgeo_remote_call_log']  = [];
+    $GLOBALS['_fqgeo_wp_die_calls']     = [];
+    $GLOBALS['_fqgeo_headers_sent']     = [];
+    $GLOBALS['_fqgeo_output']           = '';
+    $GLOBALS['_fqgeo_exit_called']      = false;
+    $GLOBALS['_fqgeo_current_query_vars'] = [];
+    $GLOBALS['_fqgeo_json_response']    = null;
 }

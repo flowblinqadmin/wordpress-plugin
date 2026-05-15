@@ -38,7 +38,7 @@ if ( PHP_VERSION_ID >= 70400 ) {
                 $this->client_secret = $client_secret;
             }
             public function get_token() {
-                $cached = get_transient( 'fq_access_token' );
+                $cached = get_transient( 'fqgeo_access_token' );
                 if ( $cached ) return $cached;
                 $response = wp_remote_post( $this->base_url . '/api/oauth/token', [
                     'timeout' => 10,
@@ -55,7 +55,7 @@ if ( PHP_VERSION_ID >= 70400 ) {
                 if ( $code !== 200 || empty( $body['access_token'] ) ) {
                     return new WP_Error( 'fqgeo_token_error', isset($body['error']) ? $body['error'] : 'token_request_failed' );
                 }
-                set_transient( 'fq_access_token', $body['access_token'], 3500 );
+                set_transient( 'fqgeo_access_token', $body['access_token'], 3500 );
                 return $body['access_token'];
             }
             public function submit_audit( $url ) {
@@ -120,7 +120,7 @@ function assert_count( $expected, $array, $msg = '' ) {
 
 function run_test( $name, $fn ) {
     global $test_results;
-    fq_reset_state();
+    fqgeo_reset_state();
     try {
         $fn();
         $test_results['pass']++;
@@ -141,34 +141,34 @@ echo "\n── Flowblinq_Proxy ──\n\n";
 // U1: register_rewrite_rules adds 3 rules
 run_test( 'U1: register_rewrite_rules adds 3 rules', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_rewrite_rules'] = [];
+    $GLOBALS['_fqgeo_rewrite_rules'] = [];
     $proxy->register_rewrite_rules();
 
-    assert_count( 3, $GLOBALS['_fq_rewrite_rules'] );
+    assert_count( 3, $GLOBALS['_fqgeo_rewrite_rules'] );
 
-    $regexes = array_column( $GLOBALS['_fq_rewrite_rules'], 'regex' );
+    $regexes = array_column( $GLOBALS['_fqgeo_rewrite_rules'], 'regex' );
     assert_true( in_array( '^llms\\.txt$', $regexes, true ), 'llms.txt rule' );
     assert_true( in_array( '^llms-full\\.txt$', $regexes, true ), 'llms-full.txt rule' );
     assert_true( in_array( '^\\.well-known/ucp\\.json$', $regexes, true ), '.well-known/ucp.json rule' );
 
     // All should be 'top' priority
-    foreach ( $GLOBALS['_fq_rewrite_rules'] as $rule ) {
+    foreach ( $GLOBALS['_fqgeo_rewrite_rules'] as $rule ) {
         assert_eq( 'top', $rule['after'], 'rule priority should be top' );
     }
 });
 
-// U2: register_query_vars adds fq_serve
-run_test( 'U2: register_query_vars adds fq_serve', function () {
+// U2: register_query_vars adds fqgeo_serve
+run_test( 'U2: register_query_vars adds fqgeo_serve', function () {
     $proxy = new Flowblinq_Proxy();
     $result = $proxy->register_query_vars( [ 'existing_var' ] );
 
-    assert_eq( [ 'existing_var', 'fq_serve' ], $result );
+    assert_eq( [ 'existing_var', 'fqgeo_serve' ], $result );
 });
 
 // U3: handle_serve — no query var
 run_test( 'U3: handle_serve returns without output when no query var', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [];
+    $GLOBALS['_fqgeo_current_query_vars'] = [];
 
     ob_start();
     $proxy->handle_serve();
@@ -180,7 +180,7 @@ run_test( 'U3: handle_serve returns without output when no query var', function 
 // U4: handle_serve — invalid key
 run_test( 'U4: handle_serve returns without output for invalid key', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'invalid_key' ];
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'invalid_key' ];
 
     ob_start();
     $proxy->handle_serve();
@@ -192,8 +192,8 @@ run_test( 'U4: handle_serve returns without output for invalid key', function ()
 // U5: handle_serve — no slug configured
 run_test( 'U5: handle_serve wp_die 503 when no slug', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    // No fq_site_slug set
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    // No fqgeo_site_slug set
 
     $caught = false;
     try {
@@ -208,9 +208,9 @@ run_test( 'U5: handle_serve wp_die 503 when no slug', function () {
 // U6: handle_serve — cache hit
 run_test( 'U6: handle_serve serves cached content on cache hit', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_transients']['fq_proxy_llms_txt'] = '# My LLMs file';
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_llms_txt'] = '# My LLMs file';
 
     ob_start();
     try {
@@ -222,9 +222,9 @@ run_test( 'U6: handle_serve serves cached content on cache hit', function () {
 
     assert_contains( '# My LLMs file', $output );
     // Should NOT have made any remote calls
-    assert_count( 0, $GLOBALS['_fq_remote_call_log'] );
+    assert_count( 0, $GLOBALS['_fqgeo_remote_call_log'] );
     // Check headers
-    $headers = $GLOBALS['_fq_headers_sent'];
+    $headers = $GLOBALS['_fqgeo_headers_sent'];
     assert_true( in_array( 'HTTP/1.1 200', $headers, true ), '200 status' );
     assert_true( in_array( 'Content-Type: text/plain; charset=utf-8', $headers, true ), 'Content-Type header' );
 });
@@ -232,9 +232,9 @@ run_test( 'U6: handle_serve serves cached content on cache hit', function () {
 // U7: handle_serve — cache miss, upstream 200
 run_test( 'U7: handle_serve fetches from upstream on cache miss', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, '# Fresh content' );
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, '# Fresh content' );
 
     ob_start();
     try {
@@ -246,17 +246,17 @@ run_test( 'U7: handle_serve fetches from upstream on cache miss', function () {
 
     assert_contains( '# Fresh content', $output );
     // Should be cached now
-    assert_eq( '# Fresh content', get_transient( 'fq_proxy_llms_txt' ) );
+    assert_eq( '# Fresh content', get_transient( 'fqgeo_proxy_llms_txt' ) );
     // Verify URL called
-    assert_eq( 'https://geo.flowblinq.com/api/serve/my-site/llms.txt', $GLOBALS['_fq_remote_call_log'][0]['url'] );
+    assert_eq( 'https://geo.flowblinq.com/api/serve/my-site/llms.txt', $GLOBALS['_fqgeo_remote_call_log'][0]['url'] );
 });
 
 // U8: handle_serve — upstream non-200
 run_test( 'U8: handle_serve returns 502 on upstream non-200', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 404, 'Not found' );
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 404, 'Not found' );
 
     ob_start();
     try {
@@ -267,15 +267,15 @@ run_test( 'U8: handle_serve returns 502 on upstream non-200', function () {
     $output = ob_get_clean();
 
     assert_contains( 'Service temporarily unavailable', $output );
-    assert_true( in_array( 'HTTP/1.1 502', $GLOBALS['_fq_headers_sent'], true ), '502 status' );
+    assert_true( in_array( 'HTTP/1.1 502', $GLOBALS['_fqgeo_headers_sent'], true ), '502 status' );
 });
 
 // U9: handle_serve — upstream timeout (WP_Error)
 run_test( 'U9: handle_serve returns 504 on upstream timeout', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = new WP_Error( 'http_request_failed', 'Connection timed out' );
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = new WP_Error( 'http_request_failed', 'Connection timed out' );
 
     ob_start();
     try {
@@ -286,16 +286,16 @@ run_test( 'U9: handle_serve returns 504 on upstream timeout', function () {
     $output = ob_get_clean();
 
     assert_contains( 'Gateway timeout', $output );
-    assert_true( in_array( 'HTTP/1.1 504', $GLOBALS['_fq_headers_sent'], true ), '504 status' );
+    assert_true( in_array( 'HTTP/1.1 504', $GLOBALS['_fqgeo_headers_sent'], true ), '504 status' );
 });
 
 // U10: handle_serve — upstream too large
 run_test( 'U10: handle_serve returns 502 for oversized response', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
     $big_body = str_repeat( 'x', 524289 ); // > 512KB
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, $big_body );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, $big_body );
 
     ob_start();
     try {
@@ -306,15 +306,15 @@ run_test( 'U10: handle_serve returns 502 for oversized response', function () {
     $output = ob_get_clean();
 
     assert_contains( 'Service temporarily unavailable', $output );
-    assert_true( in_array( 'HTTP/1.1 502', $GLOBALS['_fq_headers_sent'], true ), '502 status' );
+    assert_true( in_array( 'HTTP/1.1 502', $GLOBALS['_fqgeo_headers_sent'], true ), '502 status' );
 });
 
 // U11: handle_serve — error never cached
 run_test( 'U11: errors are never cached in transients', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_current_query_vars'] = [ 'fq_serve' => 'llms_txt' ];
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 500, 'Server error' );
+    $GLOBALS['_fqgeo_current_query_vars'] = [ 'fqgeo_serve' => 'llms_txt' ];
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 500, 'Server error' );
 
     ob_start();
     try {
@@ -322,34 +322,34 @@ run_test( 'U11: errors are never cached in transients', function () {
     } catch ( Flowblinq_GEO_Exit_Exception $e ) {}
     ob_get_clean();
 
-    assert_false( array_key_exists( 'fq_proxy_llms_txt', $GLOBALS['_fq_transients'] ), 'error should not be cached' );
+    assert_false( array_key_exists( 'fqgeo_proxy_llms_txt', $GLOBALS['_fqgeo_transients'] ), 'error should not be cached' );
 });
 
 // U12: fetch_upstream — correct URL for llms_txt
 run_test( 'U12: fetch_upstream builds correct URL for llms_txt', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, 'content' );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, 'content' );
 
     $result = $proxy->fetch_upstream( 'llms_txt', 'my-site' );
 
-    assert_eq( 'https://geo.flowblinq.com/api/serve/my-site/llms.txt', $GLOBALS['_fq_remote_call_log'][0]['url'] );
+    assert_eq( 'https://geo.flowblinq.com/api/serve/my-site/llms.txt', $GLOBALS['_fqgeo_remote_call_log'][0]['url'] );
     assert_eq( 'content', $result );
 });
 
 // U13: fetch_upstream — correct URL for business_json
 run_test( 'U13: fetch_upstream builds correct URL for business_json', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, '{}' );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, '{}' );
 
     $proxy->fetch_upstream( 'business_json', 'my-site' );
 
-    assert_eq( 'https://geo.flowblinq.com/api/serve/my-site/business.json', $GLOBALS['_fq_remote_call_log'][0]['url'] );
+    assert_eq( 'https://geo.flowblinq.com/api/serve/my-site/business.json', $GLOBALS['_fqgeo_remote_call_log'][0]['url'] );
 });
 
 // U14: inject_schema_jsonld — no slug
 run_test( 'U14: inject_schema_jsonld outputs nothing when no slug', function () {
     $proxy = new Flowblinq_Proxy();
-    // No fq_site_slug set
+    // No fqgeo_site_slug set
 
     ob_start();
     $proxy->inject_schema_jsonld();
@@ -361,9 +361,9 @@ run_test( 'U14: inject_schema_jsonld outputs nothing when no slug', function () 
 // U15: inject_schema_jsonld — cache hit, 2 schemas
 run_test( 'U15: inject_schema_jsonld outputs 2 script tags from cached JSON', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
     $schemas = [ [ '@type' => 'Organization', 'name' => 'Test' ], [ '@type' => 'WebSite', 'url' => 'http://example.com' ] ];
-    $GLOBALS['_fq_transients']['fq_proxy_schema_json'] = json_encode( $schemas );
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_schema_json'] = json_encode( $schemas );
 
     ob_start();
     $proxy->inject_schema_jsonld();
@@ -377,23 +377,23 @@ run_test( 'U15: inject_schema_jsonld outputs 2 script tags from cached JSON', fu
 // U16: inject_schema_jsonld — cache miss, valid JSON
 run_test( 'U16: inject_schema_jsonld fetches and caches schema on miss', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
     $schemas = [ [ '@type' => 'LocalBusiness' ] ];
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, json_encode( $schemas ) );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, json_encode( $schemas ) );
 
     ob_start();
     $proxy->inject_schema_jsonld();
     $output = ob_get_clean();
 
     assert_contains( 'LocalBusiness', $output );
-    assert_true( array_key_exists( 'fq_proxy_schema_json', $GLOBALS['_fq_transients'] ), 'should be cached' );
+    assert_true( array_key_exists( 'fqgeo_proxy_schema_json', $GLOBALS['_fqgeo_transients'] ), 'should be cached' );
 });
 
 // U17: inject_schema_jsonld — invalid JSON from upstream
 run_test( 'U17: inject_schema_jsonld outputs nothing for invalid JSON', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, 'not json at all' );
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, 'not json at all' );
 
     ob_start();
     $proxy->inject_schema_jsonld();
@@ -405,8 +405,8 @@ run_test( 'U17: inject_schema_jsonld outputs nothing for invalid JSON', function
 // U18: inject_schema_jsonld — non-array JSON (object instead)
 run_test( 'U18: inject_schema_jsonld outputs nothing for non-array JSON', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, '{"type":"object"}' );
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, '{"type":"object"}' );
 
     ob_start();
     $proxy->inject_schema_jsonld();
@@ -418,9 +418,9 @@ run_test( 'U18: inject_schema_jsonld outputs nothing for non-array JSON', functi
 // U19: inject_schema_jsonld — JSON_HEX_TAG encoding
 run_test( 'U19: inject_schema_jsonld uses JSON_HEX_TAG to prevent XSS', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
     $schemas = [ [ '@type' => 'Test', 'desc' => '</script><script>alert(1)</script>' ] ];
-    $GLOBALS['_fq_transients']['fq_proxy_schema_json'] = json_encode( $schemas );
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_schema_json'] = json_encode( $schemas );
 
     ob_start();
     $proxy->inject_schema_jsonld();
@@ -433,22 +433,22 @@ run_test( 'U19: inject_schema_jsonld uses JSON_HEX_TAG to prevent XSS', function
 // U20: inject_schema_jsonld — oversized response
 run_test( 'U20: inject_schema_jsonld ignores oversized response', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
     $big_body = str_repeat( '["x"]', 200000 ); // > 512KB
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, $big_body );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, $big_body );
 
     ob_start();
     $proxy->inject_schema_jsonld();
     $output = ob_get_clean();
 
     assert_eq( '', $output );
-    assert_false( array_key_exists( 'fq_proxy_schema_json', $GLOBALS['_fq_transients'] ), 'should not cache' );
+    assert_false( array_key_exists( 'fqgeo_proxy_schema_json', $GLOBALS['_fqgeo_transients'] ), 'should not cache' );
 });
 
 // U21: append_robots_directives — slug set
 run_test( 'U21: append_robots_directives adds AI crawler directives', function () {
     $proxy = new Flowblinq_Proxy();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
 
     $result = $proxy->append_robots_directives( "User-agent: *\nDisallow:\n", true );
 
@@ -472,17 +472,17 @@ run_test( 'U22: append_robots_directives returns unchanged output without slug',
 
 // U23: clear_cache deletes all 4 transients
 run_test( 'U23: clear_cache deletes all 4 proxy transients', function () {
-    $GLOBALS['_fq_transients']['fq_proxy_llms_txt'] = 'a';
-    $GLOBALS['_fq_transients']['fq_proxy_llms_full_txt'] = 'b';
-    $GLOBALS['_fq_transients']['fq_proxy_business_json'] = 'c';
-    $GLOBALS['_fq_transients']['fq_proxy_schema_json'] = 'd';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_llms_txt'] = 'a';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_llms_full_txt'] = 'b';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_business_json'] = 'c';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_schema_json'] = 'd';
 
     Flowblinq_Proxy::clear_cache();
 
-    assert_false( array_key_exists( 'fq_proxy_llms_txt', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_llms_full_txt', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_business_json', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_schema_json', $GLOBALS['_fq_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_llms_txt', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_llms_full_txt', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_business_json', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_schema_json', $GLOBALS['_fqgeo_transients'] ) );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -499,69 +499,69 @@ run_test( 'U24: test_connection returns error when no slug', function () {
         $admin->handle_ajax_test_connection();
     } catch ( FQ_Ajax_Exit_Exception $e ) {}
 
-    assert_false( $GLOBALS['_fq_json_response']['success'] );
-    assert_contains( 'slug not configured', $GLOBALS['_fq_json_response']['data']['message'] );
+    assert_false( $GLOBALS['_fqgeo_json_response']['success'] );
+    assert_contains( 'slug not configured', $GLOBALS['_fqgeo_json_response']['data']['message'] );
 });
 
 // U25: handle_ajax_test_connection — upstream 200
 run_test( 'U25: test_connection returns success on upstream 200', function () {
     $admin = new Flowblinq_Admin_Page();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, 'ok' );
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, 'ok' );
 
     try {
         $admin->handle_ajax_test_connection();
     } catch ( FQ_Ajax_Exit_Exception $e ) {}
 
-    assert_true( $GLOBALS['_fq_json_response']['success'] );
-    assert_contains( 'Connected', $GLOBALS['_fq_json_response']['data']['message'] );
+    assert_true( $GLOBALS['_fqgeo_json_response']['success'] );
+    assert_contains( 'Connected', $GLOBALS['_fqgeo_json_response']['data']['message'] );
 });
 
 // U26: handle_ajax_test_connection — upstream error
 run_test( 'U26: test_connection returns error on non-200', function () {
     $admin = new Flowblinq_Admin_Page();
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'my-site';
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 503, '' );
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'my-site';
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 503, '' );
 
     try {
         $admin->handle_ajax_test_connection();
     } catch ( FQ_Ajax_Exit_Exception $e ) {}
 
-    assert_false( $GLOBALS['_fq_json_response']['success'] );
-    assert_contains( '503', $GLOBALS['_fq_json_response']['data']['message'] );
+    assert_false( $GLOBALS['_fqgeo_json_response']['success'] );
+    assert_contains( '503', $GLOBALS['_fqgeo_json_response']['data']['message'] );
 });
 
 // U27: handle_ajax_clear_cache clears transients
 run_test( 'U27: clear_cache AJAX clears transients and returns success', function () {
     $admin = new Flowblinq_Admin_Page();
-    $GLOBALS['_fq_transients']['fq_proxy_llms_txt'] = 'cached';
-    $GLOBALS['_fq_transients']['fq_proxy_schema_json'] = 'cached';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_llms_txt'] = 'cached';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_schema_json'] = 'cached';
 
     try {
         $admin->handle_ajax_clear_cache();
     } catch ( FQ_Ajax_Exit_Exception $e ) {}
 
-    assert_true( $GLOBALS['_fq_json_response']['success'] );
-    assert_false( array_key_exists( 'fq_proxy_llms_txt', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_schema_json', $GLOBALS['_fq_transients'] ) );
+    assert_true( $GLOBALS['_fqgeo_json_response']['success'] );
+    assert_false( array_key_exists( 'fqgeo_proxy_llms_txt', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_schema_json', $GLOBALS['_fqgeo_transients'] ) );
 });
 
 // U28: handle_ajax_run_audit stores slug from response
 run_test( 'U28: run_audit stores slug from API response', function () {
     $admin = new Flowblinq_Admin_Page();
-    $GLOBALS['_fq_options']['fq_client_id'] = 'test-id';
-    $GLOBALS['_fq_options']['fq_client_secret'] = 'test-secret';
+    $GLOBALS['_fqgeo_options']['fqgeo_client_id'] = 'test-id';
+    $GLOBALS['_fqgeo_options']['fqgeo_client_secret'] = 'test-secret';
     // Token response
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, json_encode( [ 'access_token' => 'tok123' ] ) );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, json_encode( [ 'access_token' => 'tok123' ] ) );
     // Audit response with slug
-    $GLOBALS['_fq_remote_responses'][] = fq_mock_response( 200, json_encode( [ 'audit_id' => 'aud-1', 'slug' => 'my-site' ] ) );
+    $GLOBALS['_fqgeo_remote_responses'][] = fqgeo_mock_response( 200, json_encode( [ 'audit_id' => 'aud-1', 'slug' => 'my-site' ] ) );
 
     try {
         $admin->handle_ajax_run_audit();
     } catch ( FQ_Ajax_Exit_Exception $e ) {}
 
-    assert_eq( 'my-site', get_option( 'fq_site_slug' ) );
-    assert_eq( 'aud-1', get_option( 'fq_active_audit_id' ) );
+    assert_eq( 'my-site', get_option( 'fqgeo_site_slug' ) );
+    assert_eq( 'aud-1', get_option( 'fqgeo_active_audit_id' ) );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -572,43 +572,43 @@ echo "\n── Uninstall ──\n\n";
 
 // U29: Uninstall deletes all options
 run_test( 'U29: uninstall deletes all options', function () {
-    $GLOBALS['_fq_options']['fq_client_id'] = 'id';
-    $GLOBALS['_fq_options']['fq_client_secret'] = 'secret';
-    $GLOBALS['_fq_options']['fq_site_slug'] = 'slug';
-    $GLOBALS['_fq_options']['fq_active_audit_id'] = 'audit';
+    $GLOBALS['_fqgeo_options']['fqgeo_client_id'] = 'id';
+    $GLOBALS['_fqgeo_options']['fqgeo_client_secret'] = 'secret';
+    $GLOBALS['_fqgeo_options']['fqgeo_site_slug'] = 'slug';
+    $GLOBALS['_fqgeo_options']['fqgeo_active_audit_id'] = 'audit';
 
     // Source uninstall.php — it calls delete_option directly
     // We'll simulate by running the same code
-    delete_option( 'fq_client_id' );
-    delete_option( 'fq_client_secret' );
-    delete_option( 'fq_site_slug' );
-    delete_option( 'fq_active_audit_id' );
+    delete_option( 'fqgeo_client_id' );
+    delete_option( 'fqgeo_client_secret' );
+    delete_option( 'fqgeo_site_slug' );
+    delete_option( 'fqgeo_active_audit_id' );
 
-    assert_false( array_key_exists( 'fq_client_id', $GLOBALS['_fq_options'] ) );
-    assert_false( array_key_exists( 'fq_client_secret', $GLOBALS['_fq_options'] ) );
-    assert_false( array_key_exists( 'fq_site_slug', $GLOBALS['_fq_options'] ) );
-    assert_false( array_key_exists( 'fq_active_audit_id', $GLOBALS['_fq_options'] ) );
+    assert_false( array_key_exists( 'fqgeo_client_id', $GLOBALS['_fqgeo_options'] ) );
+    assert_false( array_key_exists( 'fqgeo_client_secret', $GLOBALS['_fqgeo_options'] ) );
+    assert_false( array_key_exists( 'fqgeo_site_slug', $GLOBALS['_fqgeo_options'] ) );
+    assert_false( array_key_exists( 'fqgeo_active_audit_id', $GLOBALS['_fqgeo_options'] ) );
 });
 
 // U30: Uninstall deletes all transients
 run_test( 'U30: uninstall deletes all transients', function () {
-    $GLOBALS['_fq_transients']['fq_access_token'] = 'tok';
-    $GLOBALS['_fq_transients']['fq_proxy_llms_txt'] = 'a';
-    $GLOBALS['_fq_transients']['fq_proxy_llms_full_txt'] = 'b';
-    $GLOBALS['_fq_transients']['fq_proxy_business_json'] = 'c';
-    $GLOBALS['_fq_transients']['fq_proxy_schema_json'] = 'd';
+    $GLOBALS['_fqgeo_transients']['fqgeo_access_token'] = 'tok';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_llms_txt'] = 'a';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_llms_full_txt'] = 'b';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_business_json'] = 'c';
+    $GLOBALS['_fqgeo_transients']['fqgeo_proxy_schema_json'] = 'd';
 
-    delete_transient( 'fq_access_token' );
-    delete_transient( 'fq_proxy_llms_txt' );
-    delete_transient( 'fq_proxy_llms_full_txt' );
-    delete_transient( 'fq_proxy_business_json' );
-    delete_transient( 'fq_proxy_schema_json' );
+    delete_transient( 'fqgeo_access_token' );
+    delete_transient( 'fqgeo_proxy_llms_txt' );
+    delete_transient( 'fqgeo_proxy_llms_full_txt' );
+    delete_transient( 'fqgeo_proxy_business_json' );
+    delete_transient( 'fqgeo_proxy_schema_json' );
 
-    assert_false( array_key_exists( 'fq_access_token', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_llms_txt', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_llms_full_txt', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_business_json', $GLOBALS['_fq_transients'] ) );
-    assert_false( array_key_exists( 'fq_proxy_schema_json', $GLOBALS['_fq_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_access_token', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_llms_txt', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_llms_full_txt', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_business_json', $GLOBALS['_fqgeo_transients'] ) );
+    assert_false( array_key_exists( 'fqgeo_proxy_schema_json', $GLOBALS['_fqgeo_transients'] ) );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -23,12 +23,12 @@ class Flowblinq_API_Client {
 
     /**
      * Get (or refresh) an access token.
-     * Caches in transient 'fq_access_token' for 3500 seconds (just under 1hr TTL).
+     * Caches in transient 'fqgeo_access_token' for 3500 seconds (just under 1hr TTL).
      *
      * @return string|WP_Error
      */
     public function get_token() {
-        $cached = get_transient( 'fq_access_token' );
+        $cached = get_transient( 'fqgeo_access_token' );
         if ( $cached ) {
             return $cached;
         }
@@ -57,7 +57,7 @@ class Flowblinq_API_Client {
             return new WP_Error( 'fqgeo_token_error', $body['error'] ?? 'token_request_failed', [ 'status' => $code ] );
         }
 
-        set_transient( 'fq_access_token', $body['access_token'], 3500 );
+        set_transient( 'fqgeo_access_token', $body['access_token'], 3500 );
         return $body['access_token'];
     }
 

@@ -41,13 +41,44 @@ class Flowblinq_Admin_Page {
     }
 
     public function register_settings() {
-        register_setting( 'fqgeo_settings', 'fq_client_id', [ 'sanitize_callback' => 'sanitize_text_field' ] );
-        register_setting( 'fqgeo_settings', 'fq_client_secret', [
+        register_setting( 'fqgeo_settings', 'fqgeo_client_id', [
             'sanitize_callback' => function ( $value ) {
-                if ( $value === '••••••••' ) {
-                    return get_option( 'fq_client_secret', '' );
+                if ( ! is_string( $value ) ) {
+                    return '';
                 }
-                return sanitize_text_field( $value );
+                $trimmed = trim( $value );
+                if ( strlen( $trimmed ) > 1024 || preg_match( '/[\r\n<>]/', $trimmed ) ) {
+                    add_settings_error(
+                        'fqgeo_settings',
+                        'fqgeo_client_id_invalid',
+                        __( 'Client ID contains invalid characters or is too long.', 'flowblinq-ai-boost' )
+                    );
+                    return get_option( 'fqgeo_client_id', '' );
+                }
+                return $trimmed;
+            },
+        ] );
+        register_setting( 'fqgeo_settings', 'fqgeo_client_secret', [
+            'sanitize_callback' => function ( $value ) {
+                // OAuth credentials must be stored byte-exact — sanitize_text_field()
+                // strips control characters and collapses whitespace, which would
+                // mangle valid secrets. Validate format only, store raw.
+                if ( $value === '••••••••' ) {
+                    return get_option( 'fqgeo_client_secret', '' );
+                }
+                if ( ! is_string( $value ) ) {
+                    return '';
+                }
+                $trimmed = trim( $value );
+                if ( strlen( $trimmed ) > 1024 || preg_match( '/[\r\n<>]/', $trimmed ) ) {
+                    add_settings_error(
+                        'fqgeo_settings',
+                        'fqgeo_client_secret_invalid',
+                        __( 'Client secret contains invalid characters or is too long.', 'flowblinq-ai-boost' )
+                    );
+                    return get_option( 'fqgeo_client_secret', '' );
+                }
+                return $trimmed;
             },
         ] );
     }
@@ -66,8 +97,8 @@ class Flowblinq_Admin_Page {
             'nonce_test'       => wp_create_nonce( 'fqgeo_test_connection' ),
             'nonce_clear'      => wp_create_nonce( 'fqgeo_clear_cache' ),
             'site_url'         => get_site_url(),
-            'site_slug'        => get_option( 'fq_site_slug', '' ),
-            'active_audit_id'  => get_option( 'fq_active_audit_id', '' ),
+            'site_slug'        => get_option( 'fqgeo_site_slug', '' ),
+            'active_audit_id'  => get_option( 'fqgeo_active_audit_id', '' ),
             'max_polls'        => FQGEO_MAX_POLLS,
         ] );
     }
@@ -90,19 +121,19 @@ class Flowblinq_Admin_Page {
                 ?>
                 <table class="form-table">
                     <tr>
-                        <th scope="row"><label for="fq_client_id"><?php esc_html_e( 'Client ID', 'flowblinq-ai-boost' ); ?></label></th>
+                        <th scope="row"><label for="fqgeo_client_id"><?php esc_html_e( 'Client ID', 'flowblinq-ai-boost' ); ?></label></th>
                         <td>
-                            <input type="text" id="fq_client_id" name="fq_client_id"
-                                   value="<?php echo esc_attr( get_option( 'fq_client_id', '' ) ); ?>"
+                            <input type="text" id="fqgeo_client_id" name="fqgeo_client_id"
+                                   value="<?php echo esc_attr( get_option( 'fqgeo_client_id', '' ) ); ?>"
                                    class="regular-text" autocomplete="off" />
                             <p class="description"><?php esc_html_e( 'Your Flowblinq API Client ID.', 'flowblinq-ai-boost' ); ?></p>
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="fq_client_secret"><?php esc_html_e( 'Client Secret', 'flowblinq-ai-boost' ); ?></label></th>
+                        <th scope="row"><label for="fqgeo_client_secret"><?php esc_html_e( 'Client Secret', 'flowblinq-ai-boost' ); ?></label></th>
                         <td>
-                            <?php $has_secret = (bool) get_option( 'fq_client_secret', '' ); ?>
-                            <input type="password" id="fq_client_secret" name="fq_client_secret"
+                            <?php $has_secret = (bool) get_option( 'fqgeo_client_secret', '' ); ?>
+                            <input type="password" id="fqgeo_client_secret" name="fqgeo_client_secret"
                                    value="<?php echo $has_secret ? '••••••••' : ''; ?>"
                                    class="regular-text" autocomplete="new-password" />
                             <p class="description"><?php esc_html_e( 'Your Flowblinq API Client Secret. Stored securely in WordPress options.', 'flowblinq-ai-boost' ); ?></p>
@@ -111,7 +142,7 @@ class Flowblinq_Admin_Page {
                     <tr>
                         <th scope="row"><?php esc_html_e( 'Site Slug', 'flowblinq-ai-boost' ); ?></th>
                         <td>
-                            <?php $slug = get_option( 'fq_site_slug', '' ); ?>
+                            <?php $slug = get_option( 'fqgeo_site_slug', '' ); ?>
                             <code><?php echo $slug ? esc_html( $slug ) : esc_html__( '(auto-populated after first audit)', 'flowblinq-ai-boost' ); ?></code>
                         </td>
                     </tr>
@@ -143,8 +174,8 @@ class Flowblinq_Admin_Page {
     }
 
     public function render_audit_page() {
-        $client_id     = get_option( 'fq_client_id', '' );
-        $client_secret = get_option( 'fq_client_secret', '' );
+        $client_id     = get_option( 'fqgeo_client_id', '' );
+        $client_secret = get_option( 'fqgeo_client_secret', '' );
         $configured    = $client_id && $client_secret;
         ?>
         <div class="wrap" id="fqgeo-wrap">
@@ -183,7 +214,7 @@ class Flowblinq_Admin_Page {
                     <h2><?php esc_html_e( 'Audit Results', 'flowblinq-ai-boost' ); ?></h2>
                     <div id="fqgeo-scorecard"></div>
 
-                    <?php if ( get_option( 'fq_site_slug' ) ) : ?>
+                    <?php if ( get_option( 'fqgeo_site_slug' ) ) : ?>
                         <div class="notice notice-success inline">
                             <p><?php esc_html_e( 'Proxy is active — your GEO files are being served automatically.', 'flowblinq-ai-boost' ); ?></p>
                         </div>
@@ -219,8 +250,8 @@ class Flowblinq_Admin_Page {
 
     private function get_api_client() {
         return new Flowblinq_API_Client(
-            get_option( 'fq_client_id', '' ),
-            get_option( 'fq_client_secret', '' )
+            get_option( 'fqgeo_client_id', '' ),
+            get_option( 'fqgeo_client_secret', '' )
         );
     }
 
@@ -234,13 +265,13 @@ class Flowblinq_Admin_Page {
         }
 
         if ( ! empty( $result['audit_id'] ) ) {
-            update_option( 'fq_active_audit_id', $result['audit_id'] );
+            update_option( 'fqgeo_active_audit_id', $result['audit_id'] );
         }
 
         if ( ! empty( $result['slug'] ) ) {
             $clean_slug = sanitize_text_field( $result['slug'] );
             if ( preg_match( '/^[a-z0-9\-]+$/i', $clean_slug ) ) {
-                update_option( 'fq_site_slug', $clean_slug );
+                update_option( 'fqgeo_site_slug', $clean_slug );
             } else {
                 wp_send_json_error( [ 'message' => 'Invalid slug format returned by API' ] );
             }
@@ -288,7 +319,7 @@ class Flowblinq_Admin_Page {
     public function handle_ajax_test_connection() {
         $this->verify_request( 'fqgeo_test_connection' );
 
-        $slug = get_option( 'fq_site_slug', '' );
+        $slug = get_option( 'fqgeo_site_slug', '' );
         if ( ! $slug ) {
             wp_send_json_error( [ 'message' => 'Site slug not configured. Run an audit first.' ] );
         }
