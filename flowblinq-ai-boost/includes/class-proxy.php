@@ -55,8 +55,8 @@ class Flowblinq_Proxy {
         // Already have a cookie — only keep it if it's a well-formed,
         // non-same-site URL (defends against cookie-poisoning from another vector).
         if ( ! empty( $_COOKIE['_geo_ref'] ) ) {
-            $existing      = wp_unslash( $_COOKIE['_geo_ref'] );
-            $existing_host = is_string( $existing ) ? wp_parse_url( $existing, PHP_URL_HOST ) : '';
+            $existing      = sanitize_url( wp_unslash( $_COOKIE['_geo_ref'] ) );
+            $existing_host = $existing ? wp_parse_url( $existing, PHP_URL_HOST ) : '';
             $site_host     = wp_parse_url( home_url(), PHP_URL_HOST );
             if ( $existing_host && $existing_host !== $site_host ) {
                 return; // valid cross-site cookie already set, keep it

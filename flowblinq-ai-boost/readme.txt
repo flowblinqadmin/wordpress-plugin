@@ -138,7 +138,7 @@ When you delete the plugin, all of the above are removed (`uninstall.php` clears
 * OAuth credential sanitize callbacks now use a base64url charset whitelist instead of a deny-list of newlines and angle brackets. Tab characters and other unexpected bytes are rejected.
 * Plugin boot moved into a plugins_loaded hook so plugin-conflict tooling can inspect the load order.
 * Referrer cookie is no longer trusted blindly when already present — the existing value must be a well-formed cross-site URL or it is overwritten.
-* Plugin header now declares Network: false (single-site only).
+* Documented as single-site only — in WordPress multisite installations the OAuth credentials must be entered per network site.
 * uninstall.php now removes the _fqgeo_stale_schema_json option used for stale-while-revalidate, plus the _fqgeo_lock_schema_json refresh lock transient.
 
 = 1.3.1 =
