@@ -1,38 +1,33 @@
 === Flowblinq AI Boost ===
 Contributors: adityanittur
-Tags: seo, ai, llm, schema, optimization
+Tags: ai, automation, schema, citation-tracking, attribution
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI visibility optimization for your WordPress site — powered by Flowblinq AI Boost.
+77% of brands are invisible to AI. Flowblinq is performance automation for AI-specific web pages. We audit, fix, and maintain for you.
 
 == Description ==
 
-**This is not a local llms.txt generator.** It is a thin server-side proxy to a hosted backend that continuously regenerates your AI-discovery files as AI search platforms change their ranking signals — so the files your site serves stay current without you re-running anything.
+**77% of brands are invisible to AI search platforms.** *Loamly / PRWeb, 2025*
 
-**Why this is different from the 150+ other llms.txt plugins:**
+Your WordPress site was built for humans. **Flowblinq is performance automation for AI-specific web pages.** The platform audits what ChatGPT, Claude, Perplexity, and Gemini say about your brand, writes the pages they need, and this plugin serves them on your own domain. The system keeps every asset current as those platforms change what they reward.
 
-* **Hosted, continuously-updated content.** The plugin does not write files to your disk and does not re-generate locally on a schedule. The Flowblinq backend re-audits your site as ChatGPT, Claude, Perplexity, and Gemini change what they index. Your visitors hit `your-site.com/llms.txt` and get the freshest version.
-* **Four AI-targeted files served from one integration**, not one. The plugin proxies `/llms.txt`, `/llms-full.txt`, `/.well-known/ucp.json` (business profile for AI agents), and a per-page schema.org JSON-LD injection — covering text-discovery, deep-content, business-identity, and structured-markup at once.
-* **AI-citation attribution analytics.** A small server-side beacon captures real referrer information (LinkedIn, Twitter, email — all of which strip referrer headers before JavaScript runs) so your analytics show which AI platforms and social channels are actually citing your content.
-* **One-click audit with a visibility score** that benchmarks how often AI search platforms cite your site, with concrete recommendations.
+**We audit, fix, and maintain for you. Automated after setup.**
 
-**What it does, summarized:**
+* **Audit.** What ChatGPT, Claude, Perplexity, and Gemini say about your brand. What they get right. What they miss. What they get wrong.
+* **Fix.** Four AI-specific assets served from your own domain: `llms.txt`, `llms-full.txt`, `.well-known/ucp.json`, and per-page Schema.org JSON-LD.
+* **Maintain.** The Flowblinq backend monitors what AI platforms actually index, re-evaluates as signals shift, and rewrites your assets automatically. No scheduled regeneration on your server. No re-runs of the audit.
 
-* Serves `/llms.txt`, `/llms-full.txt`, `/.well-known/ucp.json` via WordPress rewrite rules — content fetched from the Flowblinq backend, cached locally (1 hour) using WordPress Transients. No files written to disk.
-* Injects Schema.org JSON-LD markup into every page's `<head>`, populated from the centralized audit.
-* Adds `robots.txt` directives inviting AI crawlers to index the AI-discovery files.
-* Provides a server-side AI-citation tracking beacon and an analytics dashboard.
+**Recent client deployments:**
 
-**Why a hosted backend instead of local generation?**
+* National hospital network: **142,000 to 992,000 weekly page views**, 6 weeks after Flowblinq deployment. *Flowblinq client data, 2026*
+* Indian distributor of a global photography brand: **5,800 to 14,700 weekly page views**, 4 weeks after Flowblinq deployment. *Flowblinq client data, 2026*
 
-Generative search ranking signals change weekly. A static llms.txt that you generate once and forget goes stale fast. A locally-regenerated one requires you to re-run an audit every time AI platforms shift their indexing. The Flowblinq backend monitors those shifts and updates your file automatically — your site keeps serving the current version with zero ongoing work.
-
-Requires a free Flowblinq account. Get your API credentials at [geo.flowblinq.com](https://geo.flowblinq.com/dashboard/settings).
+Requires a Flowblinq account. Get credentials at [geo.flowblinq.com](https://geo.flowblinq.com/dashboard/settings).
 
 == Installation ==
 
@@ -129,6 +124,11 @@ Stored data on your WordPress site:
 When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
 
 == Changelog ==
+
+= 1.3.3 =
+* readme.txt rewritten in the Flowblinq brand voice. Plugin functionality unchanged.
+* New short description and Tags line position the plugin as performance automation for AI-specific web pages, away from the saturated "llms.txt generator" category.
+* Description block follows the brand-book copy structure: urgency stat, direction, position, action. Includes the audit/fix/maintain loop and two anonymized client deployment results.
 
 = 1.3.2 =
 * Internal hardening pass before WordPress.org resubmission.
