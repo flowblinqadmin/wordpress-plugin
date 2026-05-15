@@ -6,6 +6,7 @@ delete_option( 'fqgeo_client_id' );
 delete_option( 'fqgeo_client_secret' );
 delete_option( 'fqgeo_site_slug' );
 delete_option( 'fqgeo_active_audit_id' );
+delete_option( '_fqgeo_stale_schema_json' );
 
 // Transients
 delete_transient( 'fqgeo_access_token' );
@@ -13,5 +14,6 @@ delete_transient( 'fqgeo_proxy_llms_txt' );
 delete_transient( 'fqgeo_proxy_llms_full_txt' );
 delete_transient( 'fqgeo_proxy_business_json' );
 delete_transient( 'fqgeo_proxy_schema_json' );
+delete_transient( '_fqgeo_lock_schema_json' );
 
 flush_rewrite_rules();

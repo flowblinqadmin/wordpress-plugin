@@ -3,7 +3,7 @@ Contributors: adityanittur
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -129,6 +129,17 @@ Stored data on your WordPress site:
 When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
 
 == Changelog ==
+
+= 1.3.2 =
+* Internal hardening pass before WordPress.org resubmission.
+* AJAX handlers now bail out cleanly after a failed permission check (defence-in-depth: wp_send_json_error normally exits via wp_die(), but a custom wp_die handler could otherwise let execution continue past the rejection).
+* Schema JSON-LD output is now restricted to singular and front-page contexts. Previously it was emitted on search-result pages, archives, 404 pages, and feeds, where business-profile schema is not appropriate.
+* Site slug option (fqgeo_site_slug) now has a register_setting() sanitize callback enforcing the same lowercase-alphanumeric-hyphen format the audit handler validates. Defends against direct option writes via WP-CLI or settings-import plugins.
+* OAuth credential sanitize callbacks now use a base64url charset whitelist instead of a deny-list of newlines and angle brackets. Tab characters and other unexpected bytes are rejected.
+* Plugin boot moved into a plugins_loaded hook so plugin-conflict tooling can inspect the load order.
+* Referrer cookie is no longer trusted blindly when already present — the existing value must be a well-formed cross-site URL or it is overwritten.
+* Plugin header now declares Network: false (single-site only).
+* uninstall.php now removes the _fqgeo_stale_schema_json option used for stale-while-revalidate, plus the _fqgeo_lock_schema_json refresh lock transient.
 
 = 1.3.1 =
 * WordPress.org plugin review compliance fixes.

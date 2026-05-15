@@ -52,9 +52,16 @@ class Flowblinq_Proxy {
             return;
         }
 
-        // Already have a session cookie — don't overwrite.
+        // Already have a cookie — only keep it if it's a well-formed,
+        // non-same-site URL (defends against cookie-poisoning from another vector).
         if ( ! empty( $_COOKIE['_geo_ref'] ) ) {
-            return;
+            $existing      = wp_unslash( $_COOKIE['_geo_ref'] );
+            $existing_host = is_string( $existing ) ? wp_parse_url( $existing, PHP_URL_HOST ) : '';
+            $site_host     = wp_parse_url( home_url(), PHP_URL_HOST );
+            if ( $existing_host && $existing_host !== $site_host ) {
+                return; // valid cross-site cookie already set, keep it
+            }
+            // Otherwise fall through and overwrite with the real referrer (or no-op).
         }
 
         $referer = isset( $_SERVER['HTTP_REFERER'] ) ? sanitize_url( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
@@ -114,6 +121,11 @@ class Flowblinq_Proxy {
         $slug = get_option( 'fqgeo_site_slug', '' );
         if ( empty( $slug ) ) {
             wp_die( 'Flowblinq AI Boost not configured', '', [ 'response' => 503 ] );
+        }
+        // Defense-in-depth: re-validate the persisted slug at read time.
+        // The admin sanitize_callback enforces the same regex on write.
+        if ( ! preg_match( '/^[a-z0-9\-]{1,128}$/', $slug ) ) {
+            wp_die( 'Flowblinq AI Boost site slug invalid', '', [ 'response' => 503 ] );
         }
 
         // Check transient cache
@@ -190,6 +202,17 @@ class Flowblinq_Proxy {
      * expired, and triggers a single background refresh via transient lock.
      */
     public function inject_schema_jsonld() {
+        // Don't inject inside feeds, embeds, REST/AJAX, admin previews,
+        // or non-content pages (search results, archives, 404s).
+        if ( is_feed() || is_embed() || is_admin() ) {
+            return;
+        }
+        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+            return;
+        }
+        if ( ! is_singular() && ! is_front_page() ) {
+            return;
+        }
         $slug = get_option( 'fqgeo_site_slug', '' );
         if ( empty( $slug ) ) {
             return;

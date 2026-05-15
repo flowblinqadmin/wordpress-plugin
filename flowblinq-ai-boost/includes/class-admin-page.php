@@ -47,11 +47,15 @@ class Flowblinq_Admin_Page {
                     return '';
                 }
                 $trimmed = trim( $value );
-                if ( strlen( $trimmed ) > 1024 || preg_match( '/[\r\n<>]/', $trimmed ) ) {
+                if (
+                    strlen( $trimmed ) === 0
+                    || strlen( $trimmed ) > 1024
+                    || ! preg_match( '#^[A-Za-z0-9._\-~+/=]+$#', $trimmed )
+                ) {
                     add_settings_error(
                         'fqgeo_settings',
                         'fqgeo_client_id_invalid',
-                        __( 'Client ID contains invalid characters or is too long.', 'flowblinq-ai-boost' )
+                        __( 'Client ID is empty, too long, or contains characters outside the allowed set.', 'flowblinq-ai-boost' )
                     );
                     return get_option( 'fqgeo_client_id', '' );
                 }
@@ -61,8 +65,7 @@ class Flowblinq_Admin_Page {
         register_setting( 'fqgeo_settings', 'fqgeo_client_secret', [
             'sanitize_callback' => function ( $value ) {
                 // OAuth credentials must be stored byte-exact — sanitize_text_field()
-                // strips control characters and collapses whitespace, which would
-                // mangle valid secrets. Validate format only, store raw.
+                // would strip control characters and collapse whitespace.
                 if ( $value === '••••••••' ) {
                     return get_option( 'fqgeo_client_secret', '' );
                 }
@@ -70,15 +73,36 @@ class Flowblinq_Admin_Page {
                     return '';
                 }
                 $trimmed = trim( $value );
-                if ( strlen( $trimmed ) > 1024 || preg_match( '/[\r\n<>]/', $trimmed ) ) {
+                if (
+                    strlen( $trimmed ) === 0
+                    || strlen( $trimmed ) > 1024
+                    || ! preg_match( '#^[A-Za-z0-9._\-~+/=]+$#', $trimmed )
+                ) {
                     add_settings_error(
                         'fqgeo_settings',
                         'fqgeo_client_secret_invalid',
-                        __( 'Client secret contains invalid characters or is too long.', 'flowblinq-ai-boost' )
+                        __( 'Client secret is empty, too long, or contains characters outside the allowed set.', 'flowblinq-ai-boost' )
                     );
                     return get_option( 'fqgeo_client_secret', '' );
                 }
                 return $trimmed;
+            },
+        ] );
+        register_setting( 'fqgeo_settings', 'fqgeo_site_slug', [
+            'sanitize_callback' => function ( $value ) {
+                if ( ! is_string( $value ) ) {
+                    return get_option( 'fqgeo_site_slug', '' );
+                }
+                $candidate = strtolower( trim( $value ) );
+                if ( ! preg_match( '/^[a-z0-9\-]{1,128}$/', $candidate ) ) {
+                    add_settings_error(
+                        'fqgeo_settings',
+                        'fqgeo_site_slug_invalid',
+                        __( 'Site slug must be 1-128 characters: lowercase letters, digits, or hyphens only.', 'flowblinq-ai-boost' )
+                    );
+                    return get_option( 'fqgeo_site_slug', '' );
+                }
+                return $candidate;
             },
         ] );
     }
@@ -245,7 +269,9 @@ class Flowblinq_Admin_Page {
         check_ajax_referer( $action, 'nonce' );
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Insufficient permissions' ], 403 );
+            return false; // belt-and-braces; wp_send_json_error normally exits via wp_die().
         }
+        return true;
     }
 
     private function get_api_client() {
@@ -256,12 +282,13 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_run_audit() {
-        $this->verify_request( 'fqgeo_run_audit' );
+        if ( ! $this->verify_request( 'fqgeo_run_audit' ) ) { return; }
 
         $result = $this->get_api_client()->submit_audit( get_site_url() );
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+            return;
         }
 
         if ( ! empty( $result['audit_id'] ) ) {
@@ -274,6 +301,7 @@ class Flowblinq_Admin_Page {
                 update_option( 'fqgeo_site_slug', $clean_slug );
             } else {
                 wp_send_json_error( [ 'message' => 'Invalid slug format returned by API' ] );
+                return;
             }
         }
 
@@ -281,47 +309,52 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_poll_audit() {
-        $this->verify_request( 'fqgeo_poll_audit' );
+        if ( ! $this->verify_request( 'fqgeo_poll_audit' ) ) { return; }
 
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified via check_ajax_referer in $this->verify_request() above.
         $audit_id = isset( $_POST['audit_id'] ) ? sanitize_text_field( wp_unslash( $_POST['audit_id'] ) ) : '';
         if ( ! $audit_id ) {
             wp_send_json_error( [ 'message' => 'audit_id required' ] );
+            return;
         }
 
         $result = $this->get_api_client()->get_audit( $audit_id );
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+            return;
         }
 
         wp_send_json_success( $result );
     }
 
     public function handle_ajax_verify() {
-        $this->verify_request( 'fqgeo_verify' );
+        if ( ! $this->verify_request( 'fqgeo_verify' ) ) { return; }
 
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce is verified via check_ajax_referer in $this->verify_request() above.
         $audit_id = isset( $_POST['audit_id'] ) ? sanitize_text_field( wp_unslash( $_POST['audit_id'] ) ) : '';
         if ( ! $audit_id ) {
             wp_send_json_error( [ 'message' => 'audit_id required' ] );
+            return;
         }
 
         $result = $this->get_api_client()->verify_audit( $audit_id );
 
         if ( is_wp_error( $result ) ) {
             wp_send_json_error( [ 'message' => $result->get_error_message() ] );
+            return;
         }
 
         wp_send_json_success( $result );
     }
 
     public function handle_ajax_test_connection() {
-        $this->verify_request( 'fqgeo_test_connection' );
+        if ( ! $this->verify_request( 'fqgeo_test_connection' ) ) { return; }
 
         $slug = get_option( 'fqgeo_site_slug', '' );
         if ( ! $slug ) {
             wp_send_json_error( [ 'message' => 'Site slug not configured. Run an audit first.' ] );
+            return;
         }
 
         $url      = FQGEO_SERVE_BASE . '/' . rawurlencode( $slug ) . '/llms.txt';
@@ -329,6 +362,7 @@ class Flowblinq_Admin_Page {
 
         if ( is_wp_error( $response ) ) {
             wp_send_json_error( [ 'message' => 'Connection failed: ' . $response->get_error_message() ] );
+            return;
         }
 
         $code = wp_remote_retrieve_response_code( $response );
@@ -340,7 +374,7 @@ class Flowblinq_Admin_Page {
     }
 
     public function handle_ajax_clear_cache() {
-        $this->verify_request( 'fqgeo_clear_cache' );
+        if ( ! $this->verify_request( 'fqgeo_clear_cache' ) ) { return; }
         Flowblinq_Proxy::clear_cache();
         wp_send_json_success( [ 'message' => 'Cache cleared.' ] );
     }
