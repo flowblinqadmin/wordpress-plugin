@@ -3,7 +3,7 @@ Contributors: adityanittur
 Tags: seo, ai, llm, schema, optimization
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -129,6 +129,12 @@ Stored data on your WordPress site:
 When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
 
 == Changelog ==
+
+= 1.3.1 =
+* WordPress.org plugin review compliance fixes.
+* Renamed all 2-character fq_ prefix identifiers to the 4+ character fqgeo_ prefix per WP.org naming-collision guidelines: every option key (fqgeo_client_id, fqgeo_client_secret, fqgeo_site_slug, fqgeo_active_audit_id), every transient (fqgeo_access_token, fqgeo_proxy_*), the rewrite query variable (fqgeo_serve), and all matching HTML form field IDs/names.
+* register_setting() sanitize callbacks for fqgeo_client_id and fqgeo_client_secret now preserve raw OAuth credential bytes — sanitize_text_field() was stripping control characters and collapsing whitespace, which could mangle valid OAuth secrets. New callbacks reject newlines + HTML brackets, enforce a 1024-character cap, and surface settings errors on invalid input. Placeholder-preservation logic for the masked secret display unchanged.
+* Contributors line in readme.txt corrected to the registered WordPress.org username.
 
 = 1.3.0 =
 * Renamed plugin from "Flowblinq GEO" to "Flowblinq AI Boost" for clarity. New display name in the WordPress admin sidebar and on the plugin listing.
