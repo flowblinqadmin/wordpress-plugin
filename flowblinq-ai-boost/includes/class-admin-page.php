@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class Flowblinq_Admin_Page {
+class Fqgeo_Admin_Page {
 
     public function __construct() {
         add_action( 'admin_menu', [ $this, 'add_menu_pages' ] );
@@ -275,7 +275,7 @@ class Flowblinq_Admin_Page {
     }
 
     private function get_api_client() {
-        return new Flowblinq_API_Client(
+        return new Fqgeo_API_Client(
             get_option( 'fqgeo_client_id', '' ),
             get_option( 'fqgeo_client_secret', '' )
         );
@@ -375,7 +375,7 @@ class Flowblinq_Admin_Page {
 
     public function handle_ajax_clear_cache() {
         if ( ! $this->verify_request( 'fqgeo_clear_cache' ) ) { return; }
-        Flowblinq_Proxy::clear_cache();
+        Fqgeo_Proxy::clear_cache();
         wp_send_json_success( [ 'message' => 'Cache cleared.' ] );
     }
 }

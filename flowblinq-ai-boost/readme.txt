@@ -3,7 +3,7 @@ Contributors: adityanittur
 Tags: ai, automation, schema, citation-tracking, attribution
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -124,6 +124,9 @@ Stored data on your WordPress site:
 When you delete the plugin, `uninstall.php` removes all of the above.
 
 == Changelog ==
+
+= 1.3.5 =
+* WordPress.org Plugin Check fix. Renamed three plugin classes to use the same prefix as the rest of the plugin namespace: Flowblinq_Proxy to Fqgeo_Proxy, Flowblinq_API_Client to Fqgeo_API_Client, Flowblinq_Admin_Page to Fqgeo_Admin_Page. Behaviour unchanged.
 
 = 1.3.4 =
 * readme.txt Installation, Screenshots, FAQ, External Services, and Privacy sections rewritten in the Flowblinq voice. Plugin functionality unchanged.

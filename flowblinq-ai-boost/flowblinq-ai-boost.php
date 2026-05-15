@@ -3,7 +3,7 @@
  * Plugin Name:       Flowblinq AI Boost
  * Plugin URI:        https://geo.flowblinq.com
  * Description:       AI visibility optimization for your WordPress site.
- * Version:           1.3.4
+ * Version:           1.3.5
  * Author:            Flowblinq
  * Author URI:        https://flowblinq.com
  * License:           GPL v2 or later
@@ -31,7 +31,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'FQGEO_VERSION', '1.3.4' );
+define( 'FQGEO_VERSION', '1.3.5' );
 define( 'FQGEO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FQGEO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
@@ -41,7 +41,7 @@ require_once FQGEO_PLUGIN_DIR . 'includes/class-admin-page.php';
 require_once FQGEO_PLUGIN_DIR . 'includes/class-proxy.php';
 
 register_activation_hook( __FILE__, function () {
-    $proxy = new Flowblinq_Proxy();
+    $proxy = new Fqgeo_Proxy();
     $proxy->register_rewrite_rules();
     flush_rewrite_rules();
 } );
@@ -59,7 +59,7 @@ register_deactivation_hook( __FILE__, function () {
 // to ours via standard WP hook timing.
 add_action( 'plugins_loaded', function () {
     if ( is_admin() ) {
-        new Flowblinq_Admin_Page();
+        new Fqgeo_Admin_Page();
     }
-    new Flowblinq_Proxy();
+    new Fqgeo_Proxy();
 } );

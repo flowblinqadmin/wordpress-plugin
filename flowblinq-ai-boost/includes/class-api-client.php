@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-class Flowblinq_API_Client {
+class Fqgeo_API_Client {
 
     private string $base_url    = 'https://geo.flowblinq.com';
     private string $client_id;
