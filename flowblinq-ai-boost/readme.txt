@@ -3,7 +3,7 @@ Contributors: adityanittur
 Tags: ai, automation, schema, citation-tracking, attribution
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -14,12 +14,12 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 **77% of brands are invisible to AI search platforms.** *Loamly / PRWeb, 2025*
 
-Your WordPress site was built for humans. **Flowblinq is performance automation for AI-specific web pages.** The platform audits what ChatGPT, Claude, Perplexity, and Gemini say about your brand, writes the pages they need, and this plugin serves them on your own domain. The system keeps every asset current as those platforms change what they reward.
+Your WordPress site was built for humans. **Flowblinq is performance automation for AI-specific web pages.** The platform audits what ChatGPT, Claude, Perplexity, and Gemini say about your brand, writes the pages they need, and hosts them on Flowblinq. The plugin makes them available at your domain via WordPress rewrite rules. The system keeps every asset current as those platforms change what they reward.
 
 **We audit, fix, and maintain for you. Automated after setup.**
 
 * **Audit.** What ChatGPT, Claude, Perplexity, and Gemini say about your brand. What they get right. What they miss. What they get wrong.
-* **Fix.** Four AI-specific assets served from your own domain: `llms.txt`, `llms-full.txt`, `.well-known/ucp.json`, and per-page Schema.org JSON-LD.
+* **Fix.** Four AI-specific assets hosted on Flowblinq, served at your domain via WordPress rewrite rules: `llms.txt`, `llms-full.txt`, `.well-known/ucp.json`, and per-page Schema.org JSON-LD.
 * **Maintain.** The Flowblinq backend monitors what AI platforms actually index, re-evaluates as signals shift, and rewrites your assets automatically. No scheduled regeneration on your server. No re-runs of the audit.
 
 **Recent client deployments:**
@@ -33,97 +33,104 @@ Requires a Flowblinq account. Get credentials at [geo.flowblinq.com](https://geo
 
 1. Upload the `flowblinq-ai-boost` folder to `/wp-content/plugins/`.
 2. Activate the plugin in **WP Admin > Plugins**.
-3. Go to **Settings > Flowblinq AI Boost** and enter your Client ID and Client Secret.
-4. **Important:** Your site must use "pretty permalinks" (any structure except "Plain"). Go to **Settings > Permalinks** if you haven't set this up.
-5. Go to **Tools > GEO Audit** and click **Run Free Audit** to submit your site.
-6. Once the audit completes, your GEO files are served automatically.
+3. Open **Settings > Flowblinq AI Boost**. Enter your Client ID and Client Secret.
+4. Set permalinks to any structure except "Plain" at **Settings > Permalinks**.
+5. Open **Tools > GEO Audit**. Click **Run Free Audit**.
+6. The Flowblinq backend writes your AI assets. The plugin serves them on your domain.
 
 == Screenshots ==
 
-1. Settings page — enter your Flowblinq Client ID and Client Secret, test the connection, view your assigned site slug.
-2. GEO Audit page — one-click audit submission with live progress bar.
-3. Audit Results — visibility scorecard with actionable recommendations.
-4. Verify My Changes — before/after comparison after a re-audit.
+1. Settings page. Client ID, Client Secret, connection test, site slug.
+2. GEO Audit page. Audit submission with live progress.
+3. Audit Results. Visibility scorecard and recommendations.
+4. Verify My Changes. Before-and-after comparison after a re-audit.
 
 == Frequently Asked Questions ==
 
 = Where do I get my API credentials? =
 
-Sign up at [geo.flowblinq.com](https://geo.flowblinq.com), then go to **Settings > API** to generate a Client ID and Client Secret.
+Sign up at [geo.flowblinq.com](https://geo.flowblinq.com). Open **Settings > API**. Generate a Client ID and Client Secret.
 
 = How long does an audit take? =
 
-Typically 2-5 minutes depending on site size. The plugin polls automatically and shows a progress bar.
+2 to 5 minutes for most sites. The plugin polls the backend and shows progress.
 
 = What URLs does the plugin create? =
 
 After your first audit, the plugin serves:
 
-* `yoursite.com/llms.txt` — summary for AI models
-* `yoursite.com/llms-full.txt` — detailed version
-* `yoursite.com/.well-known/ucp.json` — structured business profile
+* `yoursite.com/llms.txt`: summary for AI models.
+* `yoursite.com/llms-full.txt`: detailed version.
+* `yoursite.com/.well-known/ucp.json`: structured business profile.
 
 = Does this plugin store files on my server? =
 
-No. All content is proxied from the Flowblinq platform and cached in your WordPress database as transients. No files are written to your uploads directory or filesystem.
+No. Content is proxied from Flowblinq. The plugin caches responses in the WordPress transients table. No files are written to disk.
 
 = How often is the content refreshed? =
 
-Cached content expires every hour. On the next request after expiry, fresh content is fetched from the platform. You can also manually clear the cache from **Settings > Flowblinq AI Boost > Clear Cache**.
+Cached content expires after one hour. The next visitor request fetches fresh content from Flowblinq. Clear the cache manually at **Settings > Flowblinq AI Boost > Clear Cache**.
 
 = Does it work with caching plugins? =
 
-Yes. The plugin sets `Cache-Control: public, max-age=3600` headers on proxy responses, which works with page caching plugins and CDNs. After clearing the Flowblinq cache, you may also need to purge your caching plugin or CDN.
+Yes. The plugin sets `Cache-Control: public, max-age=3600` on proxy responses. Page caches and CDNs honour this. When you clear the Flowblinq cache, also purge your page cache or CDN.
 
 = What if my site has "Discourage search engines" enabled? =
 
-The plugin respects that setting. When "Discourage search engines" is enabled in **Settings > Reading**, the plugin does not add AI crawler directives to `robots.txt`.
+The plugin respects that setting. With "Discourage search engines" on, no AI crawler directives are added to `robots.txt`.
 
 = What happens when I deactivate or delete the plugin? =
 
-Deactivating removes the rewrite rules (GEO paths stop working). Deleting the plugin also removes all stored options and cached data.
+Deactivating removes the rewrite rules. The GEO paths stop returning content. Deleting the plugin removes all stored options and cached data.
 
 = What is the "Verify My Changes" button? =
 
-After your first audit, click **Verify My Changes** to trigger a second audit. The plugin then shows a before/after comparison of your GEO visibility score.
+After your first audit, click **Verify My Changes** to run a second audit. The plugin shows a before-and-after comparison of your visibility score.
 
 == External Services ==
 
-This plugin connects to **geo.flowblinq.com** (the Flowblinq AI Boost platform), operated by Flowblinq. The plugin must transmit data to this service to function — it is the source of all served content.
+This plugin connects to **geo.flowblinq.com**, operated by Flowblinq. The service is the source of all served content.
 
 **What is sent, when, and why:**
 
-* When you click **Run Free Audit**, the plugin sends a JSON payload containing your site's URL (e.g. `https://yoursite.com`) to `https://geo.flowblinq.com/api/v1/audit`. This is required to start the AI-visibility audit.
-* When you click **Verify My Changes**, the plugin sends an empty JSON payload to `https://geo.flowblinq.com/api/v1/audit/{audit_id}/verify` (referencing the audit you started). This re-runs the audit so before/after results can be compared.
-* When a visitor (human or AI crawler) requests `/llms.txt`, `/llms-full.txt`, or `/.well-known/ucp.json` on your site, the plugin fetches the corresponding file from `https://geo.flowblinq.com/api/serve/{your-site-slug}/...` and caches the response for one hour. Only your site slug is sent — no visitor data.
-* Authentication uses the OAuth 2.0 client_credentials flow against `https://geo.flowblinq.com/api/oauth/token`. Your Client ID and Client Secret are sent only in this request, and the resulting access token is cached in the WordPress transients table for under one hour.
+* You click **Run Free Audit**. The plugin POSTs a JSON payload containing your site URL (e.g. `https://yoursite.com`) to `https://geo.flowblinq.com/api/v1/audit`. This starts the AI-visibility audit.
+* You click **Verify My Changes**. The plugin POSTs an empty payload to `https://geo.flowblinq.com/api/v1/audit/{audit_id}/verify`, referencing the audit you started. This re-runs the audit for a before-and-after comparison.
+* A visitor (human or AI crawler) requests `/llms.txt`, `/llms-full.txt`, or `/.well-known/ucp.json`. The plugin fetches the file from `https://geo.flowblinq.com/api/serve/{your-site-slug}/...` and caches the response for one hour. Only your site slug is sent. No visitor data.
+* Authentication uses OAuth 2.0 client_credentials against `https://geo.flowblinq.com/api/oauth/token`. The Client ID and Client Secret are sent only in this request. The access token is cached in the WordPress transients table for under one hour.
 
-**No visitor data is sent.** The plugin transmits only your site URL, your site slug, and your API credentials. It does not transmit visitor IP addresses, user agents, browsing history, form submissions, or any other end-user information.
+**No visitor data is sent.** The plugin transmits your site URL, your site slug, and your API credentials. It does not transmit visitor IP addresses, user agents, browsing history, form submissions, or any other end-user information.
 
-**Service terms and privacy policy:** by using this plugin you agree to the Flowblinq Terms of Service at [https://flowblinq.com/terms](https://flowblinq.com/terms) and Privacy Policy at [https://flowblinq.com/privacy](https://flowblinq.com/privacy).
+**Service terms and privacy policy.** By using this plugin you agree to the Flowblinq Terms of Service at [https://flowblinq.com/terms](https://flowblinq.com/terms) and Privacy Policy at [https://flowblinq.com/privacy](https://flowblinq.com/privacy).
 
 == Privacy ==
 
-This plugin transmits the following data to **geo.flowblinq.com** (Flowblinq):
+This plugin transmits the following data to **geo.flowblinq.com**, operated by Flowblinq:
 
-* Your site URL (when you start an audit).
-* Your assigned site slug (when fetching `/llms.txt` and other GEO files for visitors).
+* Your site URL when you start an audit.
+* Your site slug when fetching `/llms.txt` and other GEO files for visitors.
 * Your API credentials (Client ID and Client Secret) over HTTPS, only when requesting an access token.
 
-This plugin **does not** collect, store, or transmit:
+This plugin does not collect, store, or transmit:
 
 * Visitor IP addresses, browsers, or session identifiers.
 * End-user form submissions or comments.
-* Any personally identifiable information about anyone other than the site administrator who configures the plugin.
+* Personally identifiable information about anyone other than the site administrator who configures the plugin.
 
 Stored data on your WordPress site:
 
-* `fqgeo_client_id`, `fqgeo_client_secret`, `fqgeo_site_slug`, `fqgeo_active_audit_id` in the `wp_options` table (settings).
-* Cached response payloads in the WordPress transients table (`fqgeo_proxy_*`, `fqgeo_access_token`) — auto-expire within one hour.
+* `fqgeo_client_id`, `fqgeo_client_secret`, `fqgeo_site_slug`, `fqgeo_active_audit_id` in the `wp_options` table.
+* Cached response payloads in the WordPress transients table (`fqgeo_proxy_*`, `fqgeo_access_token`). These expire within one hour.
 
-When you delete the plugin, all of the above are removed (`uninstall.php` clears them).
+When you delete the plugin, `uninstall.php` removes all of the above.
 
 == Changelog ==
+
+= 1.3.4 =
+* readme.txt Installation, Screenshots, FAQ, External Services, and Privacy sections rewritten in the Flowblinq voice. Plugin functionality unchanged.
+* Description block corrected: Flowblinq hosts the AI assets. The plugin serves them at your domain via WordPress rewrite rules. Previous wording implied the assets were hosted on the customer site.
+* Em-dashes in prose replaced with periods, colons, or commas.
+* AI-marker phrasing stripped (Typically, actionable, automatically, etc.).
+* Shorter sentences and direct imperatives in operational instructions.
 
 = 1.3.3 =
 * readme.txt rewritten in the Flowblinq brand voice. Plugin functionality unchanged.
