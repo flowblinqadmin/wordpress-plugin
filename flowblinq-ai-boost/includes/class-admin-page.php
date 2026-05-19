@@ -185,11 +185,11 @@ class Fqgeo_Admin_Page {
                 <?php
                 printf(
                     wp_kses(
-                        /* translators: %s: Flowblinq dashboard settings URL */
-                        __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">geo.flowblinq.com → Settings → API</a>.', 'flowblinq-ai-boost' ),
+                        /* translators: %s: Flowblinq login URL */
+                        __( 'Get your credentials at <a href="%s" target="_blank" rel="noopener">www.flowblinq.com → Login</a>.', 'flowblinq-ai-boost' ),
                         [ 'a' => [ 'href' => [], 'target' => [], 'rel' => [] ] ]
                     ),
-                    esc_url( 'https://geo.flowblinq.com/dashboard/settings' )
+                    esc_url( 'https://www.flowblinq.com/login' )
                 );
                 ?>
             </p>

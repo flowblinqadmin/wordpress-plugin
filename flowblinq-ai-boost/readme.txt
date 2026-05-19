@@ -3,7 +3,7 @@ Contributors: adityanittur
 Tags: ai, automation, schema, citation-tracking, attribution
 Requires at least: 6.0
 Tested up to: 6.9
-Stable tag: 1.3.5
+Stable tag: 1.3.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,7 +27,7 @@ Your WordPress site was built for humans. **Flowblinq is performance automation 
 * National hospital network: **142,000 to 992,000 weekly page views**, 6 weeks after Flowblinq deployment. *Flowblinq client data, 2026*
 * Indian distributor of a global photography brand: **5,800 to 14,700 weekly page views**, 4 weeks after Flowblinq deployment. *Flowblinq client data, 2026*
 
-Requires a Flowblinq account. Get credentials at [geo.flowblinq.com](https://geo.flowblinq.com/dashboard/settings).
+Requires a Flowblinq account. Get credentials at [www.flowblinq.com](https://www.flowblinq.com/login).
 
 == Installation ==
 
@@ -49,7 +49,7 @@ Requires a Flowblinq account. Get credentials at [geo.flowblinq.com](https://geo
 
 = Where do I get my API credentials? =
 
-Sign up at [geo.flowblinq.com](https://geo.flowblinq.com). Open **Settings > API**. Generate a Client ID and Client Secret.
+Sign up at [www.flowblinq.com](https://www.flowblinq.com/free-audit). Open **Settings > API**. Generate a Client ID and Client Secret.
 
 = How long does an audit take? =
 
@@ -124,6 +124,10 @@ Stored data on your WordPress site:
 When you delete the plugin, `uninstall.php` removes all of the above.
 
 == Changelog ==
+
+= 1.3.6 =
+* Human-facing URLs in the readme and the admin settings page now point to www.flowblinq.com instead of geo.flowblinq.com. The sign-up link goes to /free-audit; the credentials link goes to /login. API endpoints (llms.txt proxy, OAuth tokens, audit submission) continue to be served from geo.flowblinq.com as before. No behaviour change for end users.
+* Plugin URI updated to https://www.flowblinq.com.
 
 = 1.3.5 =
 * WordPress.org Plugin Check fix. Renamed three plugin classes to use the same prefix as the rest of the plugin namespace: Flowblinq_Proxy to Fqgeo_Proxy, Flowblinq_API_Client to Fqgeo_API_Client, Flowblinq_Admin_Page to Fqgeo_Admin_Page. Behaviour unchanged.
