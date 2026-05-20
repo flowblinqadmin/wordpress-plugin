@@ -2,8 +2,8 @@
 Contributors: adityanittur
 Tags: ai, automation, schema, citation-tracking, attribution
 Requires at least: 6.0
-Tested up to: 6.9
-Stable tag: 1.3.6
+Tested up to: 7.0
+Stable tag: 1.3.7
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -124,6 +124,9 @@ Stored data on your WordPress site:
 When you delete the plugin, `uninstall.php` removes all of the above.
 
 == Changelog ==
+
+= 1.3.7 =
+* Tested up to WordPress 7.0. No code changes. Plugin Check (PCP) scan passes on WP 7.0 with zero errors or warnings on production code. None of the WP 7.0 changes (new Modern admin theme, iframed editor work, dropped PHP 7.2/7.3 support) affect plugin behaviour. Minimum PHP requirement (7.4) is already met.
 
 = 1.3.6 =
 * Human-facing URLs in the readme and the admin settings page now point to www.flowblinq.com instead of geo.flowblinq.com. The sign-up link goes to /free-audit; the credentials link goes to /login. API endpoints (llms.txt proxy, OAuth tokens, audit submission) continue to be served from geo.flowblinq.com as before. No behaviour change for end users.
